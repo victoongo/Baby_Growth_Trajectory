@@ -124,7 +124,7 @@ y <- rnorm(100)
 plot(x, y, pch=19)
 
 ## generate and plot 10 more
-## constraining axis scales to be as before
+## constraining axis scales to xbe as before
 x <- rnorm(10)
 y <- rnorm(10)
 plot(x, y, pch=19, xlim=xaxsd(), ylim=yaxsd(c(-3,3)))
