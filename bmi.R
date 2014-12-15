@@ -8,8 +8,10 @@ names(bmi)
 #keep <- complete.cases(bmi)
 #wt <- wt[keep,]
 bmi <- unique(bmi)
-bmi$id <- paste0(bmi$nestid, '_', bmi$mom_nestid)
+# bmi$id <- paste0(bmi$nestid, '_', bmi$mom_nestid)
+bmi$id <- bmi$mom_nestid * 10000 + bmi$nestid
 
+ggplot(aes(x=agemos), data=bmi) + geom_histogram() 
 
 summary(bmi)
 hist(bmi$weight)
@@ -47,22 +49,47 @@ mplot(agemos, haz, id, bmi)
 plotclean(agemos, weight, id, bmi)
 
 waz <- bmi[!is.na(bmi$height),]
-waz <- waz[1:5000,]
+waz <- subset(waz, select=c(height, agemos, id, ref_date))
+waz <- unique(waz)
+
+# agemos0 <- 
+
+#waz <- waz[1:5000,]
 # waz <- waz[waz$agemos<=48 & waz$agemos>3,]
-waz <- waz[waz$agemos<=72,]
-mplot(agemos, haz, id, waz)
-waz_freq <- table(waz$id)
-waz_keep <- data.frame(waz_freq[waz_freq>15])
+waz <- waz[waz$agemos<=12,]
+mplot(agemos, height, id, waz)
 
-waz <- waz[waz$id %in% rownames(waz_keep),]
-outliers <- velout(agemos, height, id, waz, limit=2)
-nwaz <- zapvelout(outliers, icode=6)
+# waz_freq <- table(waz$id)
+# waz_keep <- data.frame(waz_freq[waz_freq>5])
+# waz <- waz[waz$id %in% rownames(waz_keep),]
+
+ggplot(aes(x=height, fill=as.factor(sex)), data=bmi) + geom_histogram() 
+ggplot(aes(x=agemos, y=height, group=sex, color=as.factor(sex)), data=bmi) + geom_point()
+
+outliers <- velout(agemos, height, id, waz, limit=0.5, linearise=TRUE)
+nwaz <- zapvelout(outliers, icode=c(4,6,7))
+keep <- outliers[abs(outliers$height)<4.5,]
+nwaz <- waz[row.names(keep),]
 nwaz <- nwaz[!is.na(nwaz$height),]
-mplot(agemos, height, id, nwaz)
-ggplot(aes(x=height, fill=as.factor(sex)), data=nwaz) + geom_histogram() 
-ggplot(aes(x=agemos, y=height, group=sex, color=as.factor(sex)), data=nwaz) + geom_point()
 
-m1 <- sitar(x=agemos, y=height, id=id, data=nwaz, df=8)
+waz_freq <- table(nwaz$id)
+waz_keep <- data.frame(waz_freq[waz_freq>7])
+nwaz <- nwaz[nwaz$id %in% rownames(waz_keep),]
+
+outliers <- velout(agemos, height, id, waz, limit=0.5, linearise=TRUE)
+nwaz <- zapvelout(outliers, icode=c(4,6,7))
+# codeplot(outliers, icode=c(4, 6))
+nwaz <- nwaz[!is.na(nwaz$height),]
+
+waz_freq <- table(nwaz$id)
+waz_keep <- data.frame(waz_freq[waz_freq>7])
+nwaz <- nwaz[nwaz$id %in% rownames(waz_keep),]
+
+mplot(agemos, height, id, nwaz)
+# ggplot(aes(x=height, fill=as.factor(sex)), data=nwaz) + geom_histogram() 
+# ggplot(aes(x=agemos, y=height, group=sex, color=as.factor(sex)), data=nwaz) + geom_point()
+
+m1 <- sitar(x=agemos, y=height, id=id, data=nwaz, df=4)
 ## draw fitted distance and velocity curves
 ## with velocity curve in blue
 ## adding age at peak velocity
