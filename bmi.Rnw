@@ -1,0 +1,88 @@
+\documentclass{article}
+\usepackage{pdflscape}
+\usepackage{graphicx}
+\usepackage[margin = 1 cm]{geometry}
+\begin{document}
+
+<<data_cleaning, cache = FALSE, include = FALSE, eval = TRUE>>=
+library(sitar)
+library(ggplot2)
+library(plyr)
+library(nlme)
+
+setwd("~/proj_data/bmi")
+bmi<-read.csv("bmi.csv", as.is=TRUE)
+bmi <- unique(bmi)
+bmi$id <- bmi$mom_nestid * 100000 + bmi$nestid
+bmi <- bmi[bmi$X_bivht==0 & bmi$X_bivwt==0,]
+
+bmi$bmi <- bmi$weight/(bmi$height/100)^2
+
+waz <- bmi[!is.na(bmi$bmi),]
+waz <- subset(waz, select=c(bmi, agemos, id, ref_date, ht_source, sex))
+waz <- unique(waz)
+minmax <- ddply(waz, .(id), summarize, agemos_min=min(agemos), agemos_max=max(agemos))
+minmax_keep <- minmax[minmax$agemos_min<=0.5 & minmax$agemos_max>=17,]
+waz <- waz[waz$id %in% minmax_keep$id,]
+waz <- waz[waz$agemos<=25,]
+#mplot(agemos, bmi, id, waz)
+outliers <- velout(agemos, bmi, id, waz, limit=0.5, linearise=TRUE)
+nwaz <- zapvelout(outliers, icode=c(4,6,7))
+ag <- ddply(outliers, .(id), summarize, bmi_mean=mean(bmi), bmi_sd=sd(bmi))
+summary(ag)
+box_stats <- boxplot(ag$bmi_sd, na.rm=TRUE, col="blue", plot=FALSE)
+keep_list <- ag[ag$bmi_sd<0.8,]
+keep_list <- keep_list[!is.na(keep_list$bmi_sd),]
+nwaz <- nwaz[nwaz$id %in% keep_list$id,]
+nwaz <- nwaz[!is.na(nwaz$bmi),]
+waz_freq <- table(nwaz$id)
+waz_keep <- data.frame(waz_freq[waz_freq>7])
+nwaz <- nwaz[nwaz$id %in% rownames(waz_keep),]
+@
+
+<<descriptive_plots, dev = 'pdf', echo = FALSE, include = TRUE, eval = TRUE, out.width='.5\\linewidth', fig.show = 'hold'>>=
+qplot(agemos, bmi, data=nwaz, geom=c("point","smooth"), method="gam", formula=y~ns(x,3), 
+      alpha=I(1/3), colour=factor(sex), main="Scatter Plot with Natural Spline Smoothed Curve") 
+qplot(agemos, bmi, data=nwaz, geom=c("path"), alpha=I(1/3), colour=factor(id), 
+      main="Line Graph for bmi") +
+  theme(legend.position="none")
+ggplot(nwaz, aes(agemos, bmi), alpha=I(1/10)) + 
+  geom_smooth(aes(group=id, colour=factor(id)), methos="lm", size=0.2, se=F) +
+  geom_smooth(aes(group=1), method="gam", formula=y~ns(x,3), se=F, colour="red") +
+  theme(legend.position="none") +
+  ggtitle("Smoothed Line Graph for BMI")
+@
+
+<<sitar, cache = FALSE, echo = FALSE, include = FALSE>>=
+cm <- lme(bmi ~ agemos + I(agemos^2) + I(agemos^3), data=nwaz, random= ~ agemos | id, method="ML")
+pwaz <- nwaz
+pwaz$pred_cm <- predict(cm, newdata=pwaz,level=0)
+
+cm_sex <- lme(bmi ~ agemos + I(agemos^2) + I(agemos^3) + sex, data=nwaz, random= ~ agemos | id, method="ML")
+pwaz <- pwaz
+pwaz$pred_cm_sex <- predict(cm, newdata=pwaz,level=0)
+
+m1 <- sitar(x=agemos, y=bmi, id=id, data=nwaz, df=3)
+@
+
+<<plots, dev = 'pdf', echo = FALSE, include = TRUE, eval = TRUE, out.width='.5\\linewidth', fig.show = 'hold'>>=
+ggplot(pwaz,aes(x=agemos,y=bmi,color=factor(id)),alpha=I(1/3),size=0.5) + 
+  geom_path() +
+  geom_line(data=pwaz,aes(x=agemos,y=pred_cm),color="black") +
+  scale_y_continuous("bmi")+
+  theme(legend.position="none") +
+  ggtitle("Cubic NLME with Random Slope")
+
+ggplot(pwaz,aes(x=agemos,y=bmi,color=factor(id)), alpha=I(1/3),size=0.5) + 
+  geom_path() +
+  geom_line(data=pwaz,aes(x=agemos,y=pred_cm_sex,group=sex), colour="black") +
+  scale_y_continuous("bmi") +
+  theme(legend.position="none") +
+  ggtitle("Cubic NLME with Random Slope Controlling for Sex")
+
+plot(m1, y2par=list(col='blue'), apv=TRUE)
+plot(m1, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd())
+lines(m1, opt='d', col='red', lwd=2)
+@
+
+\end{document}
