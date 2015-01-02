@@ -42,7 +42,7 @@ nwaz <- nwaz[nwaz$id %in% rownames(waz_keep),]
 qplot(agemos, height, data=nwaz, geom=c("point","smooth"), method="gam", formula=y~ns(x,3), 
       alpha=I(1/3), colour=factor(sex), main="Scatter Plot with Natural Spline Smoothed Curve") +
   theme(legend.position="none")
-qplot(agemos, height, data=nwaz, geom=c("path"), alpha=I(1/3), colour=factor(id), 
+qplot(agemos, height, data=nwaz, geom=c("line"), alpha=I(1/3), colour=factor(id), 
       main="Line Graph for Height") +
   theme(legend.position="none")
 ggplot(nwaz, aes(agemos, height, colour=factor(id))) + 
@@ -66,14 +66,14 @@ m1 <- sitar(x=agemos, y=height, id=id, data=nwaz, df=3)
 
 <<plots, dev = 'pdf', echo = FALSE, include = TRUE, eval = TRUE, out.width='.5\\linewidth', fig.show = 'hold'>>=
 ggplot(pwaz,aes(x=agemos,y=height,color=factor(id)),alpha=I(1/3),size=0.2) + 
-  geom_path() +
+  geom_line() +
   geom_line(data=pwaz,aes(x=agemos,y=pred_cm),color="black") +
   scale_y_continuous("height")+
   theme(legend.position="none") +
   ggtitle("Cubic NLME with Random Slope")
 
 ggplot(pwaz,aes(x=agemos,y=height,color=factor(id)), alpha=I(1/3),size=0.2) + 
-  geom_path() +
+  geom_line() +
   geom_line(data=pwaz,aes(x=agemos,y=pred_cm_sex,group=sex), colour="black") +
   scale_y_continuous("height") +
   theme(legend.position="none") +
