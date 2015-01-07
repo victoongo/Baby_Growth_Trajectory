@@ -19,7 +19,7 @@ bmi <- bmi[bmi$X_bivwt==0,]
 waz <- bmi[!is.na(bmi$weight),]
 waz <- subset(waz, select=c(weight, agemos, id, ref_date, wt_source, sex, BMI_LMP_kgm2, mat_gest_wt_gain_category2,
                             gest_weight_gain_kg, GestAge_TotalDays, smoker, maternal_smoking2, parity_3cat, 
-                            mom_age_delv, race_final4, education4))
+                            mom_age_delv, race_final4, education4, GEST_DIABETES, PREGNANCY_HYPERTENSION))
 waz <- unique(waz)
 minmax <- ddply(waz, .(id), summarize, agemos_min=min(agemos), agemos_max=max(agemos))
 minmax_keep <- minmax[minmax$agemos_min<=0.5 & minmax$agemos_max>=17,]
@@ -39,10 +39,18 @@ waz_freq <- table(nwaz$id)
 waz_keep <- data.frame(waz_freq[waz_freq>7])
 nwaz <- nwaz[nwaz$id %in% rownames(waz_keep),]
 
+nwaz$weight <- nwaz$height
+nwaz$weight <- log(nwaz$weight)
+nwaz$weight <- log(nwaz$height)
+
 nwaz$educ.f <- factor(nwaz$education4)
 nwaz$race.f <- factor(nwaz$race_final4)
 nwaz$parity.f <- factor(nwaz$parity_3cat)
 nwaz$smoker.f <- factor(nwaz$smoker)
+nwaz$gest_dbt.f <- factor(nwaz$GEST_DIABETES)
+contrasts(nwaz$gest_dbt.f) <- contr.treatment(2, base=2)
+nwaz$preg_ht.f <- factor(nwaz$PREGNANCY_HYPERTENSION)
+contrasts(nwaz$preg_ht.f) <- contr.treatment(2, base=2)
 nwaz$mat_gest_wt_gain_c3.f <- factor(nwaz$mat_gest_wt_gain_category2)
 contrasts(nwaz$mat_gest_wt_gain_c3.f) <- contr.treatment(3, base=2)
 @
@@ -73,36 +81,49 @@ pwaz$pred_cm_sex <- predict(cm, newdata=pwaz,level=0)
 
 <<sitar, cache = FALSE, echo = TRUE, include = TRUE>>=
 
-# m1 <- sitar(x=agemos, y=weight, id=id, data=nwaz, df=3)
-m11a <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, a.formula=~BMI_LMP_kgm2
-              +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+smoker.f)
-m11b <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, b.formula=~BMI_LMP_kgm2
-              +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+smoker.f)
-m11c <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, c.formula=~BMI_LMP_kgm2
-              +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+smoker.f)
+m1 <- sitar(x=agemos, y=weight, id=id, data=nwaz, df=3)
 
-m12a <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, a.formula=~BMI_LMP_kgm2
-              +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+maternal_smoking2)
-m12b <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, b.formula=~BMI_LMP_kgm2
-              +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+maternal_smoking2)
-m12c <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, c.formula=~BMI_LMP_kgm2
-              +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+maternal_smoking2)
+m11a <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, a.formula=~BMI_LMP_kgm2
+              +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
+              +gest_dbt.f+preg_ht.f+smoker.f)
+m11b <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, b.formula=~BMI_LMP_kgm2
+              +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
+              +gest_dbt.f+preg_ht.f+smoker.f)
+m11c <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, c.formula=~BMI_LMP_kgm2
+              +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
+              +gest_dbt.f+preg_ht.f+smoker.f)
+
+# m12a <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, a.formula=~BMI_LMP_kgm2
+#               +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
+#               +gest_dbt.f+preg_ht.f+maternal_smoking2)
+# m12b <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, b.formula=~BMI_LMP_kgm2
+#               +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
+#               +gest_dbt.f+preg_ht.f+maternal_smoking2)
+# m12c <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, c.formula=~BMI_LMP_kgm2
+#               +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
+#               +gest_dbt.f+preg_ht.f+maternal_smoking2)
 
 m21a <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, a.formula=~mat_gest_wt_gain_c3.f
-              +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+smoker.f)
+              +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
+              +gest_dbt.f+preg_ht.f+smoker.f)
 m21b <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, b.formula=~mat_gest_wt_gain_c3.f
-              +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+smoker.f)
+              +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
+              +gest_dbt.f+preg_ht.f+smoker.f)
 m21c <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, c.formula=~mat_gest_wt_gain_c3.f
-              +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+smoker.f)
+              +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
+              +gest_dbt.f+preg_ht.f+smoker.f)
 
-m22a <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, a.formula=~mat_gest_wt_gain_c3.f
-              +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+maternal_smoking2)
-m22b <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, b.formula=~mat_gest_wt_gain_c3.f
-              +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+maternal_smoking2)
-m22c <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, c.formula=~mat_gest_wt_gain_c3.f
-              +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+maternal_smoking2)
+# m22a <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, a.formula=~mat_gest_wt_gain_c3.f
+#               +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
+#               +gest_dbt.f+preg_ht.f+maternal_smoking2)
+# m22b <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, b.formula=~mat_gest_wt_gain_c3.f
+#               +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
+#               +gest_dbt.f+preg_ht.f+maternal_smoking2)
+# m22c <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, c.formula=~mat_gest_wt_gain_c3.f
+#               +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
+#               +gest_dbt.f+preg_ht.f+maternal_smoking2)
 
-coef(m11a)
+coef(summary(m11a))
 ["pdat$mval", "Pr(>|t|)"]
 
 m11a.coef <- data.frame(m11a$coefficients$fixed)
@@ -141,8 +162,10 @@ for(i in 2:length(l)) {
 }
 all.coef[order(all.coef$rn),]
 
-l <- list(m11a, m11b, m11c, m12a, m12b, m12c)
-l <- list(m21a, m21b, m21c, m22a, m22b, m22c)
+# l <- list(m11a, m11b, m11c, m12a, m12b, m12c)
+# l <- list(m21a, m21b, m21c, m22a, m22b, m22c)
+l <- list(m11a, m11b, m11c, m21a, m21b, m21c)
+l <- list(m21a, m21b, m21c)
 for(i in 1:length(l)) {
 #   print(l[[i]])
    print(summary(l[[i]]))
@@ -193,9 +216,9 @@ plot(m1, y2par=list(col='blue'), apv=TRUE)
 plot(m1, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd())
 lines(m1, opt='d', col='red', lwd=2)
 
-plot(m11, y2par=list(col='blue'), apv=TRUE)
-plot(m11, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd())
-lines(m11, opt='d', col='red', lwd=2)
+plot(m11a, y2par=list(col='blue'), apv=TRUE)
+plot(m11a, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd())
+lines(m11a, opt='d', col='red', lwd=2)
 @
 
 \end{document}
