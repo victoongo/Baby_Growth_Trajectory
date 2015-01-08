@@ -54,6 +54,8 @@ nwaz$preg_ht.f <- factor(nwaz$PREGNANCY_HYPERTENSION)
 contrasts(nwaz$preg_ht.f) <- contr.treatment(2, base=2)
 nwaz$mat_gest_wt_gain_c3.f <- factor(nwaz$mat_gest_wt_gain_category2)
 contrasts(nwaz$mat_gest_wt_gain_c3.f) <- contr.treatment(3, base=2)
+
+swaz <- nwaz[nwaz$id<100000000,]
 @
 
 <<descriptive_plots, dev = 'pdf', echo = FALSE, include = FALSE, eval = TRUE, out.width='.5\\linewidth', fig.show = 'hold'>>=
