@@ -17,7 +17,8 @@ bmi$id <- bmi$mom_nestid * 100000 + bmi$nestid
 bmi <- bmi[bmi$X_bivwt==0,]
 
 waz <- bmi[!is.na(bmi$weight),]
-waz <- subset(waz, select=c(weight, agemos, id, ref_date, wt_source, sex, BMI_LMP_kgm2, mat_gest_wt_gain_category2,
+waz <- subset(waz, select=c(weight, agemos, id, ref_date, wt_source, sex, 
+                            BMI_LMP_kgm2, mat_gest_wt_gain_category2,
                             gest_weight_gain_kg, GestAge_TotalDays, smoker, maternal_smoking2, parity_3cat, 
                             mom_age_delv, race_final4, education4, GEST_DIABETES, PREGNANCY_HYPERTENSION))
 waz <- unique(waz)
@@ -200,27 +201,56 @@ m212 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz[nwaz$sex==2,]), df=3,
 #               +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
 #               +gest_dbt.f+preg_ht.f+maternal_smoking2)
 
-coef(summary(m11a))
-["pdat$mval", "Pr(>|t|)"]
+m11f.coef <- data.frame(summary(m11f)$tTable)
+save(m11f.coef, file="m11.Rda")
+m21.coef <- summary(m11f)$tTable
+save(m21.coef, file="m21.Rda")
 
-m11a.coef <- data.frame(m11a$coefficients$fixed)
-m11b.coef <- data.frame(m11b$coefficients$fixed)
-m11c.coef <- data.frame(m11c$coefficients$fixed)
+rm(m21.coef)
 
-m12a.coef <- data.frame(m12a$coefficients$fixed)
-m12b.coef <- data.frame(m12b$coefficients$fixed)
-m12c.coef <- data.frame(m12c$coefficients$fixed)
+m11f.coef$rn <- row.names(m11f.coef)
+# unlist(strsplit(as.character(m11f.coef$rn), split=".", fixed=T))
+# strsplit(as.character(m11f.coef$rn), split=".", fixed=T)
+varnames <- colsplit(as.character(m11f.coef$rn), "\\.", c("fe","cov"))
+m11fa.coef <- data.frame(m11f.coef, varnames)
+m11fa.coef <- subset(m11fa.coef, select=c("fe", "cov", "Value", "p.value"))
+m11fa.coef <- m11fa.coef[!(m11fa.coef$fe %in% c("s1", "s2", "s3")),]
+m11fa.coef <- m11fa.coef[!(m11fa.coef$cov==""),]
+rownames(m11fa.coef) <- c(1:length(m11fa.coef$fe))
+# melt(m11fa.coef, id=c("fe", "cov"))
+m11fa <- reshape(data=m11fa.coef, timevar="fe", idvar="cov", direction="wide")
+write.table(m11fa, file = "m11fa.csv", sep = ",", col.names = NA, qmethod = "double")
 
-m21a.coef <- data.frame(m21a$coefficients$fixed)
-m21b.coef <- data.frame(m21b$coefficients$fixed)
-m21c.coef <- data.frame(m21c$coefficients$fixed)
+out.sitar <- function(tmp.mf) {
+  tmp.mf.coef <- data.frame(summary(tmp.mf)$tTable)
+  tmp.mf.coef$rn <- row.names(tmp.mf.coef)
+  varnames <- colsplit(as.character(tmp.mf.coef$rn), "\\.", c("fe","cov"))
+  tmp.mfa.coef <- data.frame(tmp.mf.coef, varnames)
+  tmp.mfa.coef <- subset(tmp.mfa.coef, select=c("fe", "cov", "Value", "p.value"))
+  tmp.mfa.coef <- tmp.mfa.coef[!(tmp.mfa.coef$fe %in% c("s1", "s2", "s3")),]
+  tmp.mfa.coef <- tmp.mfa.coef[!(tmp.mfa.coef$cov==""),]
+  rownames(tmp.mfa.coef) <- c(1:length(tmp.mfa.coef$fe))
+  tmp.mfa <- reshape(data=tmp.mfa.coef, timevar="fe", idvar="cov", direction="wide")
+  write.table(tmp.mfa, file="out.csv", sep = ",", col.names = NA, qmethod = "double")
+}
+out.sitar(m11f)
+out.sitar(m21)
 
-m22a.coef <- data.frame(m22a$coefficients$fixed)
-m22b.coef <- data.frame(m22b$coefficients$fixed)
-m22c.coef <- data.frame(m22c$coefficients$fixed)
+m11a.coef <- summary(m11a)$tTable
+m11b.coef <- summary(m11b)$tTable
+m11c.coef <- summary(m11c)$tTable
 
-summary(m11a)
+m12a.coef <- summary(m12a)$tTable
+m12b.coef <- summary(m12b)$tTable
+m12c.coef <- summary(m12c)$tTable
 
+m21a.coef <- summary(m21a)$tTable
+m21b.coef <- summary(m21b)$tTable
+m21c.coef <- summary(m21c)$tTable
+
+m22a.coef <- summary(m22a)$tTable
+m22b.coef <- summary(m22b)$tTable
+m22c.coef <- summary(m22c)$tTable
 
 # all.coef <- Reduce(function(x,y) merge(x,y,by="row.names",all=T), list(m11a.coef, m21a.coef, m12a.coef))
 # all.coef <- merge(m11a.coef, m21a.coef, by="row.names", all=TRUE)
@@ -254,7 +284,8 @@ knit2pdf('../summary.Rnw')
 
 # all.coef <- join_all(list(m11a.coef, m21a.coef, m12a.coef), "row.names", type='full')
 
-# m11abc <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, a.formula=~sex+BMI_LMP_kgm2+gest_weight_gain_kg, 
+# m11abc <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, 
+# a.formula=~sex+BMI_LMP_kgm2+gest_weight_gain_kg, 
 #               b.formula=~sex+BMI_LMP_kgm2+gest_weight_gain_kg, c.formula=~sex+BMI_LMP_kgm2+gest_weight_gain_kg)
 # m12abc <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, a.formula=~sex+mat_gest_wt_gain_category2, 
 #               b.formula=~sex+mat_gest_wt_gain_category2, c.formula=~sex+mat_gest_wt_gain_category2)
