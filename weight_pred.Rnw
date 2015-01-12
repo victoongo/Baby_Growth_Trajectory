@@ -202,11 +202,14 @@ m212 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz[nwaz$sex==2,]), df=3,
 #               +gest_dbt.f+preg_ht.f+maternal_smoking2)
 
 m11f.coef <- data.frame(summary(m11f)$tTable)
-save(m11f.coef, file="m11.Rda")
-m21.coef <- summary(m11f)$tTable
-save(m21.coef, file="m21.Rda")
+save(m11f.coef, file="m11coef.Rda")
+save(m11f, file="m11f.Rda")
 
-rm(m21.coef)
+m21.coef <- summary(m21)$tTable
+save(m21.coef, file="m21coef.Rda")
+save(m21, file="m21.Rda")
+
+load("m11.Rda")
 
 m11f.coef$rn <- row.names(m11f.coef)
 # unlist(strsplit(as.character(m11f.coef$rn), split=".", fixed=T))
@@ -320,13 +323,31 @@ ggplot(pwaz,aes(x=agemos,y=weight,color=factor(id)), alpha=I(1/3),size=0.5) +
   theme(legend.position="none") +
   ggtitle("Cubic NLME with Random Slope Controlling for Sex")
 
-plot(m1, y2par=list(col='blue'), apv=TRUE)
-plot(m1, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd())
-lines(m1, opt='d', col='red', lwd=2)
+plot(m21, y2par=list(col='blue'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
+dev.copy(png,file="Plotm21dv.png",width = 640, height = 480); dev.off()
 
-plot(m11a, y2par=list(col='blue'), apv=TRUE)
-plot(m11a, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd())
-lines(m11a, opt='d', col='red', lwd=2)
+plot(m21, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(0, 15), yfun=exp, 
+     xlab="Age in Months", ylab="Weight (kg)")
+lines(m21, opt='d', col='red', lwd=2, yfun=exp, xlab="Age in Months", ylab="Weight (kg)")
+dev.copy(png,file="Plotm21a.png",width = 640, height = 480); dev.off()
+
+plot(m21, opt='u', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(0, 20), yfun=exp, 
+     xlab="Age in Months", ylab="Weight (kg)")
+dev.copy(png,file="Plotm21u.png",width = 640, height = 480); dev.off()
+
+
+plot(m11f, y2par=list(col='blue'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
+dev.copy(png,file="Plotm11dv.png",width = 640, height = 480); dev.off()
+
+plot(m11f, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(0, 15), yfun=exp, 
+     xlab="Age in Months", ylab="Weight (kg)")
+lines(m11f, opt='d', col='red', lwd=2, yfun=exp, xlab="Age in Months", ylab="Weight (kg)")
+dev.copy(png,file="Plotm11a.png",width = 640, height = 480); dev.off()
+
+plot(m11f, opt='u', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(0, 20), yfun=exp, 
+     xlab="Age in Months", ylab="Weight (kg)")
+dev.copy(png,file="Plotm11u.png",width = 640, height = 480); dev.off()
+
 @
 
 \end{document}
