@@ -56,7 +56,14 @@ contrasts(nwaz$preg_ht.f) <- contr.treatment(2, base=2)
 nwaz$mat_gest_wt_gain_c3.f <- factor(nwaz$mat_gest_wt_gain_category2)
 contrasts(nwaz$mat_gest_wt_gain_c3.f) <- contr.treatment(3, base=2)
 
-swaz <- nwaz[nwaz$id<100000000,]
+# swaz <- nwaz[nwaz$id<100000000,]
+# Number of measures by child
+# summaryBy()
+nwaz_nm <- na.omit(nwaz)
+nwaz_nm$agec3.f <- factor(cut(nwaz_nm$agemos, c(0, 6, 12, 25), right=F))
+nwaz_freq <- data.frame(table(nwaz_nm$id,nwaz_nm$agec3.f))
+names(nwaz_freq) <- list("id","age_group","freq")
+summaryBy(freq~age_group, data=nwaz_freq, FUN=list(mean, median))
 @
 
 <<descriptive_plots, dev = 'pdf', echo = FALSE, include = FALSE, eval = TRUE, out.width='.5\\linewidth', fig.show = 'hold'>>=
@@ -209,7 +216,7 @@ m21.coef <- summary(m21)$tTable
 save(m21.coef, file="m21coef.Rda")
 save(m21, file="m21.Rda")
 
-load("m11.Rda")
+load("m11f.Rda")
 
 m11f.coef$rn <- row.names(m11f.coef)
 # unlist(strsplit(as.character(m11f.coef$rn), split=".", fixed=T))
@@ -337,7 +344,7 @@ dev.copy(png,file="Plotm21u.png",width = 640, height = 480); dev.off()
 
 
 plot(m11f, y2par=list(col='blue'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
-dev.copy(png,file="Plotm11dv.png",width = 640, height = 480); dev.off()
+dev.copy(png,file="Plotm11dv.png",width = 300, height = 300); dev.off()
 
 plot(m11f, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(0, 15), yfun=exp, 
      xlab="Age in Months", ylab="Weight (kg)")
@@ -348,6 +355,50 @@ plot(m11f, opt='u', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(0, 20), yfun
      xlab="Age in Months", ylab="Weight (kg)")
 dev.copy(png,file="Plotm11u.png",width = 640, height = 480); dev.off()
 
+
+par(mfrow = c(2, 2), mar = c(4, 4, 4, 1), oma = c(0, 0, 0, 0))
+with(m11f, {
+  plot(m11f, opt='u', col=1+as.integer(id) %% 5, ylim=c(2, 18), yfun=exp, 
+       xlab="Age in Months", ylab="Weight (kg)")
+  plot(m11f, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(2, 18), yfun=exp,
+       xlab="Age in Months", ylab="Weight (kg)")
+    lines(m11f, opt='d', col='red', lwd=2, yfun=exp, xlab="Age in Months", ylab="Weight (kg)")
+  plot(m11f, y2par=list(col='blue'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
+})
+dev.copy(png,file="Plotm11.png",width = 960, height = 960); dev.off()
+
+
+par(mfrow = c(1, 2), mar = c(4, 4, 4, 1), oma = c(0, 0, 0, 0))
+with(m11f, {
+  plot(m11f, opt='u', col=1+as.integer(id) %% 5, ylim=c(2, 18), yfun=exp, 
+       xlab="Age in Months", ylab="Weight (kg)", main='a')
+  plot(m11f, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(2, 18), yfun=exp,
+       xlab="Age in Months", ylab="Weight (kg)", main='b')
+    lines(m11f, opt='d', col='red', lwd=2, yfun=exp, xlab="Age in Months", ylab="Weight (kg)")
+#   plot(m11f, y2par=list(col='blue'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
+})
+dev.copy(png,file="Plotm11.png",width = 960, height = 480); dev.off()
+
+
+def.par <- par(no.readonly = TRUE) # save default, for resetting...
+
+
+nf <- layout(matrix(c(1,2,0,3),2,2,byrow = TRUE), c(2,2), c(2,2), TRUE)
+layout.show(nf)
+par(mar = c(4,4,4,1), oma = c(0, 0, 0, 0))
+
+plot(m11f, opt='u', col=1+as.integer(id) %% 5, ylim=c(2, 18), yfun=exp, 
+     xlab="Age in Months", ylab="Weight (kg)")
+plot(m11f, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(2, 18), yfun=exp,
+     xlab="Age in Months", ylab="Weight (kg)")
+  lines(m11f, opt='d', col='red', lwd=2, yfun=exp, xlab="Age in Months", ylab="Weight (kg)")
+# par(mar = c(4,4,4,1), oma = c(2, 2, 2, 2))
+plot(m11f, y2par=list(col='blue'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
+dev.copy(png,file="Plotm11.png",width = 960, height = 960); dev.off()
+
+plot(m11f, opt='dv', y2par=list(col='blue'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
+plot(nwaz$agemos, y1=nwaz$weight, y2=nwaz$GestAge_TotalDays, type='l', xlab="Age in Months", ylab="Weight (kg)")
+par(def.par)
 @
 
 \end{document}
