@@ -9,6 +9,7 @@ library(sitar)
 library(ggplot2)
 library(plyr)
 library(nlme)
+library(doBy)
 
 setwd("~/Projects/R_lib/bmi/data")
 bmi<-read.csv("bmi.csv", as.is=TRUE)
@@ -61,6 +62,8 @@ contrasts(nwaz$mat_gest_wt_gain_c3.f) <- contr.treatment(3, base=2)
 # summaryBy()
 nwaz_nm <- na.omit(nwaz)
 nwaz_nm$agec3.f <- factor(cut(nwaz_nm$agemos, c(0, 6, 12, 25), right=F))
+summary(data.frame(table(nwaz_nm$id)))
+
 nwaz_freq <- data.frame(table(nwaz_nm$id,nwaz_nm$agec3.f))
 names(nwaz_freq) <- list("id","age_group","freq")
 summaryBy(freq~age_group, data=nwaz_freq, FUN=list(mean, median))
@@ -399,6 +402,57 @@ dev.copy(png,file="Plotm11.png",width = 960, height = 960); dev.off()
 plot(m11f, opt='dv', y2par=list(col='blue'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
 plot(nwaz$agemos, y1=nwaz$weight, y2=nwaz$GestAge_TotalDays, type='l', xlab="Age in Months", ylab="Weight (kg)")
 par(def.par)
+
+
+load('m11f.Rda')
+
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.0605375640,b=0.1595475100,c=-0.0649566752))
+legend("right",lty=1,col=c("black","blue"),legend=c("Normal BMI","BMI > 35"), cex=0.9, inset=0.05)
+dev.copy(png,file="Plotm11bmi.png",width = 640, height = 480); dev.off()
+
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.1188336132,b=0.5251127982,c=-0.2815792547))
+legend("right",lty=1,col=c("black","blue"),legend=c("No Diabetes","Gestational Diabetes"), cex=0.9, inset=0.05)
+dev.copy(png,file="Plotm11diab.png",width = 640, height = 480); dev.off()
+
+par(fig=c(0,0.495,0,1), new=T)
+  plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
+  plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+  plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+       add=T, abc=c(a=0.0605375640,b=0.1595475100,c=-0.0649566752))
+  legend("right",lty=1,col=c("black","blue"),legend=c("Normal BMI","BMI > 35"), cex=0.9, inset=0.05)
+  title(main="a", cex=1.5)
+par(fig=c(0.505,1,0,1), new=T)  
+  plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
+  plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+  plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+       add=T, abc=c(a=0.1188336132,b=0.5251127982,c=-0.2815792547))
+  legend("right",lty=1,col=c("black","blue"),legend=c("No Diabetes","Gestational Diabetes"), cex=0.9, inset=0.05)
+  title(main="a", cex=1.5)
+dev.copy(png,file="Plotm11bmi_diab.png",width = 960, height = 480); dev.off()
+
+
+par(mfrow = c(1, 2), oma = c(0, 0, 1, 0))
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar = c(4, 4, 0, 5))
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.0605375640,b=0.1595475100,c=-0.0649566752))
+legend("right",lty=1,col=c("black","blue"),legend=c("Normal BMI","BMI > 35"), cex=0.9, inset=0.05)
+title(main="a", font.main=4, cex.main=1, adj=0, outer=T)
+
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar = c(4, 5, 0, 4))
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.1188336132,b=0.5251127982,c=-0.2815792547))
+legend("right",lty=1,col=c("black","blue"),legend=c("w/o Diabetes","w/ Diabetes"), cex=0.9, inset=0.05)
+title(main="b", font.main=4, cex.main=1, adj=0.5, outer=T)
+dev.copy(png,file="Plotm11bmi_diab.png",width = 960, height = 480); dev.off()
+
 @
 
 \end{document}
