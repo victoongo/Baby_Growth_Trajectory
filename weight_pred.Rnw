@@ -385,7 +385,6 @@ dev.copy(png,file="Plotm11.png",width = 960, height = 480); dev.off()
 
 def.par <- par(no.readonly = TRUE) # save default, for resetting...
 
-
 nf <- layout(matrix(c(1,2,0,3),2,2,byrow = TRUE), c(2,2), c(2,2), TRUE)
 layout.show(nf)
 par(mar = c(4,4,4,1), oma = c(0, 0, 0, 0))
@@ -403,7 +402,28 @@ plot(m11f, opt='dv', y2par=list(col='blue'), yfun=exp, xlab="Age in Months", yla
 plot(nwaz$agemos, y1=nwaz$weight, y2=nwaz$GestAge_TotalDays, type='l', xlab="Age in Months", ylab="Weight (kg)")
 par(def.par)
 
+# final (it matters to the legend size how the screen device is sized, it wants to stay the same proportion to 
+# the print out on screen. so when the screen size is small, the png legends ends up big.)
+def.par <- par(no.readonly = TRUE) # save default, for resetting...
 
+nf <- layout(matrix(c(1,2,0,3),2,2,byrow = TRUE), c(2,2), c(2,2), TRUE)
+layout.show(nf)
+par(oma = c(0, 0, 0, 0), mar = c(4, 4, 1, 4))
+
+plot(m11f, opt='u', col=1+as.integer(id) %% 5, ylim=c(2, 18), yfun=exp, 
+     xlab="Age in Months", ylab="Weight (kg)")
+plot(m11f, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(2, 18), yfun=exp,
+     xlab="Age in Months", ylab="Weight (kg)")
+  lines(m11f, opt='d', col='red', lwd=2, yfun=exp, xlab="Age in Months", ylab="Weight (kg)")
+# par(mar = c(4,4,4,1), oma = c(2, 2, 2, 2))
+plot(m11f, y2par=list(col='blue'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar = c(4, 4, 1, 4))
+plot(m11f, y2par=list(col='blue'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+dev.copy(png,file="Plotm11.png",width = 960, height = 960); dev.off()
+
+par(def.par)
+
+
+# create the dv plot with abc parameters for covariates 
 load('m11f.Rda')
 
 plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
@@ -436,7 +456,7 @@ par(fig=c(0.505,1,0,1), new=T)
   title(main="a", cex=1.5)
 dev.copy(png,file="Plotm11bmi_diab.png",width = 960, height = 480); dev.off()
 
-
+# final
 par(mfrow = c(1, 2), oma = c(0, 0, 1, 0))
 plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar = c(4, 4, 0, 5))
 plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
