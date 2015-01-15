@@ -57,6 +57,8 @@ contrasts(nwaz$preg_ht.f) <- contr.treatment(2, base=2)
 nwaz$mat_gest_wt_gain_c3.f <- factor(nwaz$mat_gest_wt_gain_category2)
 contrasts(nwaz$mat_gest_wt_gain_c3.f) <- contr.treatment(3, base=2)
 
+save(nwaz, file="nwaz.Rda")
+
 # swaz <- nwaz[nwaz$id<100000000,]
 # Number of measures by child
 # summaryBy()
@@ -403,7 +405,9 @@ plot(nwaz$agemos, y1=nwaz$weight, y2=nwaz$GestAge_TotalDays, type='l', xlab="Age
 par(def.par)
 
 # final (it matters to the legend size how the screen device is sized, it wants to stay the same proportion to 
-# the print out on screen. so when the screen size is small, the png legends ends up big.)
+# the print out on screen. so when the screen size is small, the png legends ends up big.
+# also, it seems the mar parameter specified in par doesn't control the plot.sitar very well, possilbly due to 
+# internal specification of mar in plot.sitar function. but the resetting default code seems to help)
 def.par <- par(no.readonly = TRUE) # save default, for resetting...
 
 nf <- layout(matrix(c(1,2,0,3),2,2,byrow = TRUE), c(2,2), c(2,2), TRUE)
@@ -472,6 +476,96 @@ plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", y
 legend("right",lty=1,col=c("black","blue"),legend=c("w/o Diabetes","w/ Diabetes"), cex=0.9, inset=0.05)
 title(main="b", font.main=4, cex.main=1, adj=0.5, outer=T)
 dev.copy(png,file="Plotm11bmi_diab.png",width = 960, height = 480); dev.off()
+
+
+# final for quad (problems is that u and a plot.sitar does not accept mar speced in the plot itself, only the one in the par, but the dv plot.sitar only takes the mar from within the plot spec)
+def.par <- par(no.readonly = TRUE) # save default, for resetting...
+
+nf <- layout(matrix(c(1,2,3,4),2,2,byrow = TRUE), c(2,2), c(2,2), TRUE)
+layout.show(nf)
+par(oma = c(0, 0, 0, 0), mar = c(4, 4, 2, 5))
+
+plot(m11f, opt='u', col=1+as.integer(id) %% 5, ylim=c(2, 18), yfun=exp, 
+     xlab="Age in Months", ylab="Weight (kg)", mar = c(4, 4, 2, 5))
+title(main="a", font.main=4, cex.main=1.2, adj=0)
+
+plot(m11f, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(2, 18), yfun=exp,
+     xlab="Age in Months", ylab="Weight (kg)", mar = c(4, 4, 2, 5))
+  lines(m11f, opt='d', col='red', lwd=2, yfun=exp, xlab="Age in Months", ylab="Weight (kg)")
+title(main="b", font.main=4, cex.main=1.2, adj=0)
+
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar = c(4, 4, 2, 5))
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.0605375640,b=0.1595475100,c=-0.0649566752))
+legend("right",lty=1,col=c("black","blue"),legend=c("Normal BMI","BMI > 35"), cex=0.9, inset=0.05)
+title(main="c", font.main=4, cex.main=1.2, adj=0)
+
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar = c(4, 4, 2, 5))
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.1188336132,b=0.5251127982,c=-0.2815792547))
+legend("right",lty=1,col=c("black","blue"),legend=c("w/o Diabetes","w/ Diabetes"), cex=0.9, inset=0.05)
+title(main="d", font.main=4, cex.main=1.2, adj=0)
+dev.copy(png,file="Plotm11q.png",width = 960, height = 960); dev.off()
+
+par(def.par)
+
+
+# final for quad (problems is that u and a plots does not accept mar speced in the plot itself, only the one in the par)
+# the plot axis can use oma to show ticks whem mar is set to 0
+library(sitar)
+setwd("~/Projects/R_lib/bmi/data")
+load('m11f.Rda')
+load('nwaz.Rda')
+
+par(mfrow = c(2, 2), oma = c(4, 4, 0, 4), mar=c(0,0,0,0))
+
+plot(m11f, opt='u', col=1+as.integer(id) %% 5, ylim=c(2, 18), yfun=exp, 
+     xlab="Age in Months", ylab="Weight (kg)", axes=F)
+axis(2, col = "grey40", col.axis = "grey20", at = seq(2,18,4))
+box(col = "grey60")
+title(main="a", font.main=4, cex.main=1.2, adj=0, line=-1)
+
+plot(m11f, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(2, 18), yfun=exp,
+     xlab="Age in Months", ylab="Weight (kg)", axes=F)
+  lines(m11f, opt='d', col='red', lwd=2, yfun=exp, xlab="Age in Months", ylab="Weight (kg)")
+box(col = "grey60")
+title(main="b", font.main=4, cex.main=1.2, adj=0, line=-1)
+
+plot(m11f, y2par=list(col='black', axes=F), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar=c(0,0,0,0), axes=F)
+plot(m11f, y2par=list(col='black', axes=F), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue', axes=F), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.0605375640,b=0.1595475100,c=-0.0649566752))
+axis(2, col = "grey40", col.axis = "grey20", at = seq(4,12,2))
+axis(1, col = "grey40", col.axis = "grey20", at = seq(0,25,5))
+box(col = "grey60")
+legend("right",lty=1,col=c("black","blue"),legend=c("Normal BMI","BMI > 35"), cex=0.9, inset=0.05)
+title(main="c", font.main=4, cex.main=1.2, adj=0, line=-1)
+
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar=c(0,0,0,0), axes=F, add=F, y2axis=TRUE)
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.1188336132,b=0.5251127982,c=-0.2815792547))
+axis(1, col = "grey40", col.axis = "grey20", at = seq(0,25,5))
+# axis(4, col = "grey40", col.axis = "grey20", at = seq(0.2,1.2,0.2))
+box(col = "grey60")
+legend("right",lty=1,col=c("black","blue"),legend=c("w/o Diabetes","w/ Diabetes"), cex=0.9, inset=0.05)
+title(main="d", font.main=4, cex.main=1.2, adj=0, line=-1)
+
+mtext("Age in Months", side = 1, outer = TRUE, cex=1, line = 2.8)
+mtext("Weight (kg)", side = 2, outer = TRUE, cex=1, line = 2.5)
+mtext("Weight (kg) Velocity", side = 4, outer=TRUE, cex=1, line=2.8, adj=0.2)
+
+dev.copy(png,file="Plotm11qn.png",width = 960, height = 960); dev.off()
+
+
+
+par(mfrow = c(1, 1), oma = c(4, 4, 0, 4), mar=c(0,0,0,0))
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar=c(0,0,0,0), axes=T, y2axis=TRUE, axispar(col = "grey40", col.axis = "grey20", at = seq(0.2,1.2,0.2)))
+
+
+# axis(4, col = "grey40", col.axis = "grey20", at = seq(0.2,1.2,0.2), tck=1)
 
 @
 
