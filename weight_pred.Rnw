@@ -10,6 +10,7 @@ library(ggplot2)
 library(plyr)
 library(nlme)
 library(doBy)
+library(reshape2)
 
 setwd("~/Projects/R_lib/bmi/data")
 bmi<-read.csv("bmi.csv", as.is=TRUE)
@@ -21,7 +22,7 @@ waz <- bmi[!is.na(bmi$weight),]
 waz <- subset(waz, select=c(weight, agemos, id, ref_date, wt_source, sex, 
                             BMI_LMP_kgm2, mat_gest_wt_gain_category2,
                             gest_weight_gain_kg, GestAge_TotalDays, smoker, maternal_smoking2, parity_3cat, 
-                            mom_age_delv, race_final4, education4, GEST_DIABETES, PREGNANCY_HYPERTENSION))
+                            mom_age_delv, race_final, education4, GEST_DIABETES, PREGNANCY_HYPERTENSION))
 waz <- unique(waz)
 minmax <- ddply(waz, .(id), summarize, agemos_min=min(agemos), agemos_max=max(agemos))
 minmax_keep <- minmax[minmax$agemos_min<=0.5 & minmax$agemos_max>=17,]
@@ -41,13 +42,17 @@ waz_freq <- table(nwaz$id)
 waz_keep <- data.frame(waz_freq[waz_freq>7])
 nwaz <- nwaz[nwaz$id %in% rownames(waz_keep),]
 
+# nwaz <- nwaz[!is.na(nwaz$race_final),]
+nwaz <- nwaz[nwaz$race_final!="Other",]
+nwaz <- nwaz[nwaz$race_final!="",]
+
 nwaz$weight <- log(nwaz$weight)
 
 nwaz$bmic5.f <- factor(cut(nwaz$BMI_LMP_kgm2, c(0, 18.5, 25, 30, 35, 100), right=F))
 contrasts(nwaz$bmic5.f) <- contr.treatment(5, base=2)
-
 nwaz$educ.f <- factor(nwaz$education4)
-nwaz$race.f <- factor(nwaz$race_final4)
+nwaz$race.f <- factor(nwaz$race_final)
+contrasts(nwaz$race.f) <- contr.treatment(3, base=3)
 nwaz$parity.f <- factor(nwaz$parity_3cat)
 nwaz$smoker.f <- factor(nwaz$smoker)
 nwaz$gest_dbt.f <- factor(nwaz$GEST_DIABETES)
@@ -69,6 +74,33 @@ summary(data.frame(table(nwaz_nm$id)))
 nwaz_freq <- data.frame(table(nwaz_nm$id,nwaz_nm$agec3.f))
 names(nwaz_freq) <- list("id","age_group","freq")
 summaryBy(freq~age_group, data=nwaz_freq, FUN=list(mean, median))
+
+# aggdata <- subset(nwaz, select=c(id, race.f))
+# aggdata <-aggregate(aggdata, by=list('id'), FUN=mean, na.rm=TRUE)
+countby <- function(dat,byvar,freqvar) {
+  aggdata <- by(dat$byvar,tail,n=1)
+  aggdatadf <- do.call("rbind", as.list(aggdata))
+  table(aggdatadf$freqvar)
+
+}
+countby <- function(dat,byvar,freqvar) {
+  aggdata <- with(dat, by(byvar,tail,n=1))
+  aggdatadf <- do.call("rbind", as.list(aggdata))
+  table(aggdatadf$freqvar)
+}
+countby(nwaz, id, race.f)
+
+by(nwaz, nwaz$race.f, function(nwaz$id) length(unique(nwaz$id)))
+
+tapply(nwaz$id, nwaz$race.f, function(x) length(unique(x))) # best way to go
+tapply(bmi$id, bmi$race_final, function(x) length(unique(x))) 
+tapply(bmi$id, bmi$race_final, function(x) length(x)/length(unique(x))) 
+table(bmi$race_final)
+
+aggdata <- by(nwaz,nwaz$id,tail,n=1)
+aggdatadf <- do.call("rbind", as.list(aggdata))
+table(aggdatadf$race.f)
+aggregate(id~race.f, nwaz, length)
 @
 
 <<descriptive_plots, dev = 'pdf', echo = FALSE, include = FALSE, eval = TRUE, out.width='.5\\linewidth', fig.show = 'hold'>>=
@@ -220,6 +252,10 @@ save(m11f, file="m11f.Rda")
 m21.coef <- summary(m21)$tTable
 save(m21.coef, file="m21coef.Rda")
 save(m21, file="m21.Rda")
+
+m11f.coef <- data.frame(summary(m11f)$tTable)
+save(m11f.coef, file="m11coef.Rda")
+save(m11f, file="m11fn2.Rda")
 
 load("m11f.Rda")
 
@@ -514,6 +550,7 @@ par(def.par)
 
 # final for quad (problems is that u and a plots does not accept mar speced in the plot itself, only the one in the par)
 # the plot axis can use oma to show ticks whem mar is set to 0
+# this version makes gapless 2*2 panel plots with modified sitar package. 
 library(sitar)
 setwd("~/Projects/R_lib/bmi/data")
 load('m11f.Rda')
@@ -560,12 +597,33 @@ mtext("Weight (kg) Velocity", side = 4, outer=TRUE, cex=1, line=2.8, adj=0.2)
 dev.copy(png,file="Plotm11qn.png",width = 960, height = 960); dev.off()
 
 
+# final for 3 by 1 (the a plot is not on the same yaxis scale as the b and c plot, making the curve look flatter, can use layout() to 
+# correct this by assigning more height for a plot)
+library(sitar)
+setwd("~/Projects/R_lib/bmi/data")
+load('m11f.Rda')
+load('nwaz.Rda')
 
-par(mfrow = c(1, 1), oma = c(4, 4, 0, 4), mar=c(0,0,0,0))
-plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar=c(0,0,0,0), axes=T, y2axis=TRUE, axispar(col = "grey40", col.axis = "grey20", at = seq(0.2,1.2,0.2)))
+par(mfrow = c(3, 1), oma = c(0, 0, 0, 0), mar = c(4, 4, 2, 4))
 
+plot(m11f, opt='u', col=1+as.integer(id) %% 5, yfun=exp, 
+     xlab="Age in Months", ylab="Weight (kg)", mar = c(4, 4, 2, 5))
+title(main="a", font.main=4, cex.main=1.2, adj=0)
 
-# axis(4, col = "grey40", col.axis = "grey20", at = seq(0.2,1.2,0.2), tck=1)
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar = c(4, 4, 2, 4))
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.0605375640,b=0.1595475100,c=-0.0649566752))
+legend("right",lty=1,col=c("black","blue"),legend=c("Normal BMI","BMI > 35"), cex=0.9, inset=0.05)
+title(main="b", font.main=4, cex.main=1.2, adj=0)
+
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar = c(4, 4, 2, 4))
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.1188336132,b=0.5251127982,c=-0.2815792547))
+legend("right",lty=1,col=c("black","blue"),legend=c("w/o Diabetes","w/ Diabetes"), cex=0.9, inset=0.05)
+title(main="c", font.main=4, cex.main=1.2, adj=0)
+dev.copy(png,file="Plotm11t.png",width = 320, height = 800); dev.off()
 
 @
 
