@@ -39,20 +39,20 @@ nwaz <- zapvelout(outliers, icode=c(4,5,6,8))
 # nwaz <- nwaz[nwaz$id %in% keep_list$id,]
 nwaz <- nwaz[!is.na(nwaz$weight),]
 waz_freq <- table(nwaz$id)
-waz_keep <- data.frame(waz_freq[waz_freq>7])
+waz_keep <- data.frame(waz_freq[waz_freq>5])
 nwaz <- nwaz[nwaz$id %in% rownames(waz_keep),]
 
 # nwaz <- nwaz[!is.na(nwaz$race_final),]
-nwaz <- nwaz[nwaz$race_final!="Other",]
+# nwaz <- nwaz[nwaz$race_final!="Other",]
 nwaz <- nwaz[nwaz$race_final!="",]
 
 nwaz$weight <- log(nwaz$weight)
 
-nwaz$bmic5.f <- factor(cut(nwaz$BMI_LMP_kgm2, c(0, 18.5, 25, 30, 35, 100), right=F))
-contrasts(nwaz$bmic5.f) <- contr.treatment(5, base=2)
+nwaz$bmic5.f <- factor(cut(nwaz$BMI_LMP_kgm2, c(0, 18.5, 25, 30, 35, 40, 100), right=F))
+contrasts(nwaz$bmic5.f) <- contr.treatment(6, base=2)
 nwaz$educ.f <- factor(nwaz$education4)
 nwaz$race.f <- factor(nwaz$race_final)
-contrasts(nwaz$race.f) <- contr.treatment(3, base=3)
+contrasts(nwaz$race.f) <- contr.treatment(4, base=4)
 nwaz$parity.f <- factor(nwaz$parity_3cat)
 nwaz$smoker.f <- factor(nwaz$smoker)
 nwaz$gest_dbt.f <- factor(nwaz$GEST_DIABETES)
@@ -93,7 +93,10 @@ countby(nwaz, id, race.f)
 by(nwaz, nwaz$race.f, function(nwaz$id) length(unique(nwaz$id)))
 
 tapply(nwaz$id, nwaz$race.f, function(x) length(unique(x))) # best way to go
+tapply(nwaz$id, nwaz$race.f, function(x) length(x)/length(unique(x))) 
+tapply(nwaz$id, nwaz$bmic5.f, function(x) length(x)/length(unique(x))) 
 tapply(bmi$id, bmi$race_final, function(x) length(unique(x))) 
+tapply(bmi$id, bmi$race_final, function(x) length(x)/length(unique(x))) 
 tapply(bmi$id, bmi$race_final, function(x) length(x)/length(unique(x))) 
 table(bmi$race_final)
 
@@ -171,18 +174,7 @@ m112 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz[nwaz$sex==2,]), df=3,
               c.formula=~BMI_LMP_kgm2
               +gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
               +gest_dbt.f+preg_ht.f+smoker.f)
-
-m11f <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, 
-              a.formula=~bmic5.f
-              +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
-              +gest_dbt.f+preg_ht.f+smoker.f, 
-              b.formula=~bmic5.f
-              +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
-              +gest_dbt.f+preg_ht.f+smoker.f, 
-              c.formula=~bmic5.f
-              +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
-              +gest_dbt.f+preg_ht.f+smoker.f)
-
+x
 
 # m12a <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, a.formula=~BMI_LMP_kgm2
 #               +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
@@ -251,11 +243,15 @@ save(m11f, file="m11f.Rda")
 
 m21.coef <- summary(m21)$tTable
 save(m21.coef, file="m21coef.Rda")
-save(m21, file="m21.Rda")
+save(m21, file="m21n.Rda")
 
 m11f.coef <- data.frame(summary(m11f)$tTable)
-save(m11f.coef, file="m11coef.Rda")
-save(m11f, file="m11fn2.Rda")
+save(m11f.coef, file="m11coefn5.Rda")
+save(m11f, file="m11fn5.Rda")
+
+m11.coef <- data.frame(summary(m11)$tTable)
+save(m11.coef, file="m11n4coef.Rda")
+save(m11, file="m11fn4.Rda")
 
 load("m11f.Rda")
 
@@ -623,7 +619,36 @@ plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", y
      add=T, abc=c(a=0.1188336132,b=0.5251127982,c=-0.2815792547))
 legend("right",lty=1,col=c("black","blue"),legend=c("w/o Diabetes","w/ Diabetes"), cex=0.9, inset=0.05)
 title(main="c", font.main=4, cex.main=1.2, adj=0)
-dev.copy(png,file="Plotm11t.png",width = 320, height = 800); dev.off()
+dev.copy(png,file="Plotm11t40_noother.png",width = 320, height = 800); dev.off()
+
+
+
+# final for 3 by 1 at 40
+library(sitar)
+setwd("~/Projects/R_lib/bmi/data")
+load('m11f.Rda')
+load('nwaz.Rda')
+
+par(mfrow = c(3, 1), oma = c(0, 0, 0, 0), mar = c(4, 4, 2, 4))
+
+plot(m11f, opt='u', col=1+as.integer(id) %% 5, yfun=exp, 
+     xlab="Age in Months", ylab="Weight (kg)", mar = c(4, 4, 2, 5))
+title(main="a", font.main=4, cex.main=1.2, adj=0)
+
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar = c(4, 4, 2, 4))
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.1018024530,b=0.3109147150,c=-0.1734587254))
+legend("right",lty=1,col=c("black","blue"),legend=c("Normal BMI","BMI > 40"), cex=0.9, inset=0.05)
+title(main="b", font.main=4, cex.main=1.2, adj=0)
+
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar = c(4, 4, 2, 4))
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.1261866877,b=0.4728156052,c=-0.3030369190))
+legend("right",lty=1,col=c("black","blue"),legend=c("w/o Diabetes","w/ Diabetes"), cex=0.9, inset=0.05)
+title(main="c", font.main=4, cex.main=1.2, adj=0)
+dev.copy(png,file="Plotm11t40.png",width = 320, height = 800); dev.off()
 
 @
 
