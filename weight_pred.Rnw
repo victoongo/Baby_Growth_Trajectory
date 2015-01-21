@@ -650,6 +650,47 @@ legend("right",lty=1,col=c("black","blue"),legend=c("w/o Diabetes","w/ Diabetes"
 title(main="c", font.main=4, cex.main=1.2, adj=0)
 dev.copy(png,file="Plotm11t40.png",width = 320, height = 800); dev.off()
 
+
+# final for 2 by 1 at 40
+
+par(mfrow = c(2, 1), oma = c(0, 0, 0, 0), mar = c(4, 4, 2, 4), cex=0.7)
+
+plot(m11f, opt='u', col=1+as.integer(id) %% 5, yfun=exp, 
+     xlab="Age in Months", ylab="Weight (kg)", mar = c(4, 4, 2, 5))
+title(main="a", font.main=4, cex.main=1.2, adj=0)
+
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, mar = c(4, 4, 2, 4))
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.1018024530,b=0.3109147150,c=-0.1734587254))
+legend("right",lty=1,col=c("black","blue"),legend=c("Normal BMI","BMI > 40"), cex=0.9, inset=0.05)
+title(main="b", font.main=4, cex.main=1.2, adj=0)
+
+dev.copy(png,file="Plotm11t40_2_1.png",width = 320, height = 560); dev.off()
+
+# final for 2 by 1 at 40 - with reduced margin
+
+par(mfrow = c(2, 1), oma = c(0, 0, 0, 0), mar = c(3, 3, 2, 3), cex=0.7)
+
+plot(m11f, opt='u', col=1+as.integer(id) %% 5, yfun=exp, 
+     xlab="", ylab="", mar = c(4, 4, 2, 5))
+mtext("Age in Months", side=1, line=2, cex=0.7) 
+mtext("Weight (kg)", side=2, line=2, cex=0.7)
+title(main="a", font.main=4, cex.main=1.2, adj=0)
+
+
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="", ylab="Weight (kg)", apv=T, mar = c(3, 3, 2, 3))
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="", ylab="", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="", ylab="Weight (kg)", apv=T, 
+     add=T, abc=c(a=0.1018024530,b=0.3109147150,c=-0.1734587254))
+legend("right",lty=1,col=c("black","blue"),legend=c("Normal BMI","BMI > 40"), cex=0.9, inset=0.05)
+mtext("Age in Months", side=1, line=2, cex=0.7) 
+mtext("Weight (kg)", side=2, line=2, cex=0.7)
+mtext("Weight (kg) Velocity", side=4, line=2, cex=0.7)
+title(main="b", font.main=4, cex.main=1.2, adj=0)
+
+dev.copy(png,file="Plotm11t40_2_1.png",width = 320, height = 560); dev.off()
+
 @
 
 \end{document}
