@@ -11,6 +11,7 @@ library(plyr)
 library(nlme)
 library(doBy)
 library(reshape2)
+library(xtable)
 
 setwd("~/Projects/R_lib/bmi/data")
 bmi<-read.csv("bmi.csv", as.is=TRUE)
@@ -175,13 +176,13 @@ m112 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz[nwaz$sex==2,]), df=3,
               +gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
               +gest_dbt.f+preg_ht.f+smoker.f)
 
-m11f <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, 
+m11f <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3,
               a.formula=~bmic5.f
               +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
-              +gest_dbt.f+preg_ht.f+smoker.f, 
+              +gest_dbt.f+preg_ht.f+smoker.f,
               b.formula=~bmic5.f
               +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
-              +gest_dbt.f+preg_ht.f+smoker.f, 
+              +gest_dbt.f+preg_ht.f+smoker.f,
               c.formula=~bmic5.f
               +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
               +gest_dbt.f+preg_ht.f+smoker.f)
@@ -281,17 +282,34 @@ write.table(m11fa, file = "m11fa.csv", sep = ",", col.names = NA, qmethod = "dou
 out.sitar <- function(tmp.mf) {
   tmp.mf.coef <- data.frame(summary(tmp.mf)$tTable)
   tmp.mf.coef$rn <- row.names(tmp.mf.coef)
+  tmp.mf.intvl <- data.frame(intervals(tmp.mf)$fixed)
+  tmp.mf.intvl$rn <- row.names(tmp.mf.intvl)
+  tmp.mf.coef <- merge(tmp.mf.intvl, tmp.mf.coef, by='rn')
   varnames <- colsplit(as.character(tmp.mf.coef$rn), "\\.", c("fe","cov"))
   tmp.mfa.coef <- data.frame(tmp.mf.coef, varnames)
-  tmp.mfa.coef <- subset(tmp.mfa.coef, select=c("fe", "cov", "Value", "p.value"))
+  tmp.mfa.coef <- subset(tmp.mfa.coef, select=c("fe", "cov", "Value", "p.value", "lower", "upper"))
   tmp.mfa.coef <- tmp.mfa.coef[!(tmp.mfa.coef$fe %in% c("s1", "s2", "s3")),]
   tmp.mfa.coef <- tmp.mfa.coef[!(tmp.mfa.coef$cov==""),]
   rownames(tmp.mfa.coef) <- c(1:length(tmp.mfa.coef$fe))
   tmp.mfa <- reshape(data=tmp.mfa.coef, timevar="fe", idvar="cov", direction="wide")
   write.table(tmp.mfa, file="out.csv", sep = ",", col.names = NA, qmethod = "double")
+  return(tmp.mfa)
 }
-out.sitar(m11f)
-out.sitar(m21)
+m11f.out <- out.sitar(m11f)
+m21.out <- out.sitar(m21)
+names(m11f.out) <- c("cov", paste('m11f', names(m11f.out)[-1], sep=""))
+names(m21.out) <- c("cov", paste('m21', names(m21.out)[-1], sep=""))
+all.out <- merge(m11f.out, m21.out, by="cov", all=T)
+order.n <- data.frame(cbind(c(20, 17:19, 8, 13, 14, 15, 6, 7, 21, 22, 11, 12, 10, 1:5, 9, 16), 1:22))
+order.n <- order.n[order(order.n$X1),]
+order.n <- c(order.n$X2)
+all.out <- cbind(all.out,order.n)
+all.out <- all.out[order(order.n),]
+# order.out <- cbind(all.out$cov, 1:length(all.out$cov), order.n)
+all.table <- xtable(all.out)
+digits(all.table)[c(2,6)] <- 0
+print(all.table, floating=F)
+
 
 m11a.coef <- summary(m11a)$tTable
 m11b.coef <- summary(m11b)$tTable
@@ -774,6 +792,11 @@ mtext("Weight (kg) Velocity", side=4, line=2, cex=0.7)
 # title(main="b", font.main=4, cex.main=1.2, adj=0)
 
 dev.copy(png,file="Plotm11t40_1_1_BMI_150201.png",width = 320, height = 320); dev.off()
+
+
+load('m11fcoef.Rda')
+load('m21coef.Rda')
+
 @
 
 \end{document}

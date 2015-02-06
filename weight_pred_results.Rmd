@@ -1,0 +1,169 @@
+---
+title: ""
+output: html_document
+css: style.css
+---
+
+`r Sys.Date()`
+
+### Association between pre-pregnancy BMI and gestational weight gain with size, tempo and velocity of infant weight gain: Analysis of the Newborn Epigenetic Study (NEST) cohort.
+  
+```{r , results='asis', echo=FALSE, include=FALSE, cache=F}
+library(sitar)
+library(ggplot2)
+library(plyr)
+library(nlme)
+library(doBy)
+library(reshape2)
+library(xtable)
+
+setwd("~/Projects/R_lib/bmi/data")
+load('m11f.Rda')
+load('m21.Rda')
+load('nwaz.Rda')
+```
+
+
+#### Table 1 Descriptive Analysis
+
+```{r des, echo=FALSE, results='asis'}
+# sex.table <- table(nwaz$sex)
+# prop.table(sex.table)
+fvar <- subset(nwaz, select=c(mat_gest_wt_gain_c3.f, sex, parity.f, race.f, educ.f, gest_dbt.f, preg_ht.f, smoker.f,bmic5.f))
+cvar <- subset(nwaz, select=c(GestAge_TotalDays, mom_age_delv, weight, gest_weight_gain_kg))
+tblFun <- function(x){
+    tbl <- table(x)
+    prop <- round(prop.table(tbl)*100,0)
+    prop
+}
+p.table <- apply(fvar, 2, tblFun)
+p.table <- data.frame(unlist(p.table))
+f.table <- apply(fvar, 2, table)
+f.table <- data.frame(unlist(f.table))
+n.table <- cbind(f.table, p.table)
+for (i in 1:ncol(n.table)) {
+  n.table[,i] <- as.character(n.table[,i])
+}
+# n.table <- data.frame(as.character(n.table[,c(1,2)]))
+names(n.table) <- c('N/Mean', 'PCT/SD')
+
+c.m <- data.frame(unlist(apply(cvar, 2, mean, na.rm=T)))
+c.sd <- data.frame(unlist(apply(cvar, 2, sd, na.rm=T)))
+c.table <- round(cbind(c.m, c.sd), digits=2)
+for (i in 1:ncol(c.table)) {
+  c.table[,i] <- as.character(c.table[,i])
+}
+names(c.table) <- c('N/Mean', 'PCT/SD')
+
+des.table <- rbind(n.table, c.table)
+
+des.table <- xtable(des.table, include.rownames=FALSE) # html.table.attributes=list(font.size=7pt)
+# digits(des.table)[c(2,6)] <- 0
+print(des.table, type='html')
+
+# tblFun <- function(x){
+#     tbl <- table(x)
+#     tbl <- cbind(tbl,round(prop.table(tbl)*100,0))
+#     colnames(tbl) <- c('Count','Percentage')
+#     print(names(x))
+#     tbl
+# }
+# tt <- tblFun(fvar$sex)
+# do.call(rbind,lapply(fvar,tblFun, use.names=T))
+
+```
+
+#### Table 2 Results of SITAR Models
+
+```{r sitar, results='asis', echo=FALSE}
+out.sitar <- function(tmp.mf) {
+  tmp.mf.coef <- data.frame(summary(tmp.mf)$tTable)
+  tmp.mf.coef$rn <- row.names(tmp.mf.coef)
+  tmp.mf.intvl <- data.frame(intervals(tmp.mf)$fixed)
+  tmp.mf.intvl$rn <- row.names(tmp.mf.intvl)
+  tmp.mf.coef <- merge(tmp.mf.intvl, tmp.mf.coef, by='rn')
+  varnames <- colsplit(as.character(tmp.mf.coef$rn), "\\.", c("fe","cov"))
+  tmp.mfa.coef <- data.frame(tmp.mf.coef, varnames)
+  tmp.mfa.coef <- subset(tmp.mfa.coef, select=c("fe", "cov", "Value", "p.value", "lower", "upper"))
+  tmp.mfa.coef <- tmp.mfa.coef[!(tmp.mfa.coef$fe %in% c("s1", "s2", "s3")),]
+  tmp.mfa.coef <- tmp.mfa.coef[!(tmp.mfa.coef$cov==""),]
+  rownames(tmp.mfa.coef) <- c(1:length(tmp.mfa.coef$fe))
+  tmp.mfa <- reshape(data=tmp.mfa.coef, timevar="fe", idvar="cov", direction="wide")
+  write.table(tmp.mfa, file="out.csv", sep = ",", col.names = NA, qmethod = "double")
+  return(tmp.mfa)
+}
+m11.out <- out.sitar(m11f)
+m21.out <- out.sitar(m21)
+names(m11.out) <- c("cov", paste('m11', names(m11.out)[-1], sep=""))
+names(m21.out) <- c("cov", paste('m21', names(m21.out)[-1], sep=""))
+all.out <- merge(m11.out, m21.out, by="cov", all=T)
+order.n <- data.frame(cbind(c(20, 17:19, 8, 13, 14, 15, 6, 7, 21, 22, 11, 12, 10, 1:5, 9, 16), 1:22))
+order.n <- order.n[order(order.n$X1),]
+order.n <- c(order.n$X2)
+all.out <- cbind(all.out,order.n)
+all.out <- all.out[order(order.n),]
+# order.out <- cbind(all.out$cov, 1:length(all.out$cov), order.n)
+# format(all.out[,-1], digits=0, nsmall=3, scientific=F) # won't change the actual value
+all.out <- cbind(all.out[,1], round(all.out[,-1], digits=3))
+# all.out <- data.frame(apply(all.out, 2, as.character)) # already done by paste
+all.table <- NULL
+all.table <- data.frame(all.out[,1])
+names(all.table) <- "Covariate"
+# all.table$Model.1a <- paste0(all.out$m11Value.a," (",all.out$m11lower.a,",",all.out$m11upper.a,") ",all.out$m11p.value.a)
+p <- function(outd, ind, x) {
+  outd <- cbind(outd, paste0(ind[,x+1]," (",ind[,x+3],",",ind[,x+4],") ",ind[,x+2]))
+  names(outd)[ncol(outd)] <- paste0("Model.",m,r)
+  outd
+}
+counter <- 1
+for (m in 1:2) {
+  for (r in c("a", "b", "c")) {
+    all.table <- p(all.table, all.out, counter)
+    counter <- counter+4
+  }
+}
+all.table[all.table=="NA (NA,NA) NA"] <- NA
+
+# t <- function(d, x, v) {
+#   print(head(nwaz[,x+(1:3)]))
+#   print(head(paste(d[,x+1], d[,x+2], d[,names(d)==v])))
+# }
+# t(nwaz, 3, "sex")
+
+
+all.table <- xtable(all.table, include.rownames=FALSE) # html.table.attributes=list(font.size=7pt)
+digits(all.table)[c(2,6)] <- 0
+print(all.table, type='html')
+```
+
+Note: the values in each cell represent: coefficient (confidence interval) p-value 
+
+#### plot of individual raw data and SITAR adjusted individual data
+
+```{r, echo=FALSE, fig.show='hold'}
+plot(m11f, opt='u', col=1+as.integer(id) %% 5, ylim=c(2, 18), yfun=exp,
+     xlab="Age in Months", ylab="Weight (kg)")
+
+plot(m11f, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(2, 18), yfun=exp,
+     xlab="Age in Months", ylab="Weight (kg)")
+  lines(m11f, opt='d', col='red', lwd=2, yfun=exp, xlab="Age in Months", ylab="Weight (kg)")
+```
+
+#### plot of growth vs velocity
+
+```{r, echo=FALSE, fig.show='hold'}
+plot(m21, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
+plot(m21, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T, add=T)
+plot(m21, y2par=list(col='red'), col='red', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T,
+     add=T, abc=c(a=-0.017523766,b=-0.023842045,c=0.039002980))
+plot(m21, y2par=list(col='blue'), col='blue', yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T,
+     add=T, abc=c(a=0.054474945,b=0.062496335,c=-0.067801963))
+legend("right",lty=1,col=c("red", "black","blue"),legend=c("< recommended","= recommanded", "> recommanded"), cex=0.9, inset=0.05)
+
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="Age in Months", ylab="Weight (kg)", apv=T)
+plot(m11f, y2par=list(col='black'), yfun=exp, xlab="", ylab="", apv=T, add=T)
+plot(m11f, y2par=list(col='blue'), col='blue', yfun=exp, xlab="", ylab="Weight (kg)", apv=T,
+     add=T, abc=c(a=0.1018024530,b=0.3109147150,c=-0.1734587254))
+legend("right",lty=1,col=c("black","blue"),legend=c("Normal BMI","BMI > 40"), cex=0.9, inset=0.05)
+
+```
