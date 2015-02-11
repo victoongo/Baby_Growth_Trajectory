@@ -20,7 +20,7 @@ bmi$id <- bmi$mom_nestid * 100000 + bmi$nestid
 bmi <- bmi[bmi$X_bivwt==0,]
 
 waz <- bmi[!is.na(bmi$weight),]
-waz <- subset(waz, select=c(weight, agemos, id, ref_date, wt_source, sex,
+waz <- subset(waz, select=c(weight, agemos, id, ref_date, wt_source, sex, BABY_WEIGHT,
                             BMI_LMP_kgm2, mat_gest_wt_gain_category2,
                             gest_weight_gain_kg, GestAge_TotalDays, smoker, maternal_smoking2, parity_3cat,
                             mom_age_delv, race_final, education4, GEST_DIABETES, PREGNANCY_HYPERTENSION))

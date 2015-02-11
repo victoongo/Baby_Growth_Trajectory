@@ -1,0 +1,59 @@
+---
+title: "Birth Weight by Prepregnancy BMI"
+author: "Victor Wang"
+date: "02/11/2015"
+output: html_document
+---
+
+```{r, echo=FALSE, fig.show='hold'}
+options(warn=-1,show.error.messages=F)
+
+library(ggplot2)
+library(plyr)
+library(nlme)
+library(doBy)
+library(reshape2)
+library(xtable)
+
+setwd("~/Projects/R_lib/bmi/data/")
+```
+```{r, echo=FALSE}
+load('nwaz.Rda')
+# nwaz <- nwaz[unique(nwaz$id),] # doesn't work
+# swaz <- with(nwaz, by(id,tail,n=1))
+swaz <- by(nwaz, nwaz$id,tail,n=1)
+awaz <- do.call("rbind", as.list(swaz))
+nwaz <- subset(awaz, select=c(id, sex, BABY_WEIGHT, race.f, bmic5.f,
+                            BMI_LMP_kgm2, mat_gest_wt_gain_category2,
+                            gest_weight_gain_kg, GestAge_TotalDays, smoker, maternal_smoking2, parity_3cat,
+                            mom_age_delv, race_final, education4, GEST_DIABETES, PREGNANCY_HYPERTENSION))
+nwaz <- na.omit(nwaz)
+
+summary(lm(BABY_WEIGHT~BMI_LMP_kgm2+race.f, data=nwaz))
+summary(lm(BABY_WEIGHT~BMI_LMP_kgm2+race.f+BMI_LMP_kgm2*race.f, data=nwaz))
+summary(lm(BMI_LMP_kgm2~race.f, data=nwaz))
+```
+```{r, echo=FALSE, fig.show='hold'}
+suppressMessages(print(qplot(BABY_WEIGHT, data=nwaz, geom="histogram", fill=bmic5.f)))
+
+qplot(BABY_WEIGHT, ..density.., data=nwaz, geom="density", fill=bmic5.f, position='stack', main='Density')
+
+qplot(BABY_WEIGHT, ..count.., data=nwaz, geom="density", fill=bmic5.f, position='stack', main='Count')
+
+qplot(BABY_WEIGHT, ..count.., data=nwaz, geom="density", fill=bmic5.f, position='fill', main='Count')
+
+p <- ggplot(nwaz, aes(x=BABY_WEIGHT, group=bmic5.f, fill=bmic5.f)) +
+#   geom_density(fill=NA, color="black") +
+  geom_histogram() +
+  facet_grid(bmic5.f ~ .) +
+  theme(legend.position="none") +
+  ggtitle("Smoothed Line Graph for weight")
+
+suppressMessages(print(p))
+
+qplot(bmic5.f, BABY_WEIGHT, data=nwaz, geom="violin", fill=bmic5.f)
+
+qplot(bmic5.f, BABY_WEIGHT, data=nwaz, geom="boxplot", fill=bmic5.f)
+
+qplot(BMI_LMP_kgm2, BABY_WEIGHT, data=nwaz, color=bmic5.f)
+```
