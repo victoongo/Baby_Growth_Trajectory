@@ -56,7 +56,7 @@ nwaz$education_final <- sub("/", "_", nwaz$education_final)
 # factor works with integer. numberic will have NaN as a value that leads to the
 nwaz$bmic5.f <- factor(cut(nwaz$BMI_LMP_kgm2, c(0, 18.5, 25, 30, 35, 40, 100), right=F))
 contrasts(nwaz$bmic5.f) <- contr.treatment(6, base=2)
-nwaz$educ.f <- factor(nwaz$education_final)
+nwaz$educ.f <- factor(nwaz$education_final, exclude = "")
 nwaz$race.f <- factor(nwaz$race_final)
 contrasts(nwaz$race.f) <- contr.treatment(4, base=4)
 nwaz$parity.f <- factor(nwaz$parity_3cat)
@@ -140,14 +140,54 @@ pwaz$pred_cm_sex <- predict(cm, newdata=pwaz,level=0)
 
 m1 <- sitar(x=agemos, y=weight, id=id, data=nwaz, df=3)
 
-fmla11 <- "~bmic5.f+sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+gest_dbt.f+preg_ht.f+smoker.f+mat_ht_m"
-
-# fmla11 <- "~BMI_LMP_kgm2+sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+gest_dbt.f+preg_ht.f+smoker.f+mat_ht_m"
-
-fmla21 <- "~mat_gest_wt_gain_c3.f+sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+gest_dbt.f+preg_ht.f+smoker.f+mat_ht_m"
+fmla11 <- "~sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+mat_ht_m"
+fmla12 <- paste0(fmla11, "+gest_dbt.f+preg_ht.f")
+fmla13 <- paste0(fmla12, "+smoker.f+bmic5.f+gest_weight_gain_kg")
 
 m11 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3,
              a.formula=as.formula(fmla11), b.formula=as.formula(fmla11), c.formula=as.formula(fmla11))
+m12 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3,
+             a.formula=as.formula(fmla12), b.formula=as.formula(fmla12), c.formula=as.formula(fmla12))
+m13 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3,
+             a.formula=as.formula(fmla13), b.formula=as.formula(fmla13), c.formula=as.formula(fmla13))
+
+m11.coef <- data.frame(summary(m11)$tTable)
+save(m11.coef, file="m11coef.Rda")
+save(m11, file="m11.Rda")
+
+m12.coef <- data.frame(summary(m12)$tTable)
+save(m12.coef, file="m12coef.Rda")
+save(m12, file="m11.Rda")
+
+m13.coef <- data.frame(summary(m13)$tTable)
+save(m13.coef, file="m13coef.Rda")
+save(m13, file="m13.Rda")
+
+fmla21 <- "~sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f+mat_ht_m"
+fmla22 <- paste0(fmla21, "+gest_dbt.f+preg_ht.f")
+fmla23 <- paste0(fmla22, "+smoker.f+mat_gest_wt_gain_c3.f")
+
+m21 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3,
+             a.formula=as.formula(fmla21), b.formula=as.formula(fmla21), c.formula=as.formula(fmla21))
+m22 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3,
+             a.formula=as.formula(fmla22), b.formula=as.formula(fmla22), c.formula=as.formula(fmla22))
+m23 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3,
+             a.formula=as.formula(fmla23), b.formula=as.formula(fmla23), c.formula=as.formula(fmla23))
+
+m21.coef <- data.frame(summary(m21)$tTable)
+save(m21.coef, file="m21coef.Rda")
+save(m21, file="m21.Rda")
+
+m22.coef <- data.frame(summary(m22)$tTable)
+save(m22.coef, file="m22coef.Rda")
+save(m22, file="m22.Rda")
+
+m23.coef <- data.frame(summary(m23)$tTable)
+save(m23.coef, file="m23coef.Rda")
+save(m23, file="m23.Rda")
+
+
+
 
 m11a <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, a.formula=~BMI_LMP_kgm2
               +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
@@ -191,9 +231,6 @@ m112 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz[nwaz$sex==2,]), df=3,
 #               +sex+gest_weight_gain_kg+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
 #               +gest_dbt.f+preg_ht.f+maternal_smoking2)
 
-m21 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3,
-             a.formula=as.formula(fmla21), b.formula=as.formula(fmla21), c.formula=as.formula(fmla21))
-
 m21a <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz), df=3, a.formula=~mat_gest_wt_gain_c3.f
               +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
               +gest_dbt.f+preg_ht.f+smoker.f)
@@ -235,23 +272,23 @@ m212 <- sitar(x=agemos, y=weight, id=id, data=na.omit(nwaz[nwaz$sex==2,]), df=3,
 #               +sex+GestAge_TotalDays+parity.f+mom_age_delv+race.f+educ.f
 #               +gest_dbt.f+preg_ht.f+maternal_smoking2)
 
-m11f.coef <- data.frame(summary(m11)$tTable)
-save(m11f.coef, file="m11fcoef.Rda")
-save(m11f, file="m11f.Rda")
+m11.coef <- data.frame(summary(m11)$tTable)
+save(m11.coef, file="m11coef.Rda")
+write.csv(m11.coef, file="m11.coef.csv")
+save(m11, file="m11.Rda")
 
 m21.coef <- summary(m21)$tTable
 save(m21.coef, file="m21coef.Rda")
 write.csv(m21.coef, file="m21.coef.csv")
 save(m21, file="m21.Rda")
 
+m11f.coef <- data.frame(summary(m11)$tTable)
+save(m11f.coef, file="m11fcoef.Rda")
+save(m11f, file="m11f.Rda")
+
 m11f.coef <- data.frame(summary(m11f)$tTable)
 save(m11f.coef, file="m11coefn5.Rda")
 save(m11f, file="m11fn5.Rda")
-
-m11.coef <- data.frame(summary(m11)$tTable)
-save(m11.coef, file="m11n4coef.Rda")
-write.csv(m11.coef, file="m11.coef.csv")
-save(m11, file="m11fn4.Rda")
 
 load("m11f.Rda")
 

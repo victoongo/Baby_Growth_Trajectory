@@ -15,7 +15,7 @@ library(doBy)
 library(reshape2)
 library(xtable)
 
-setwd("~/Projects/R_lib/bmi/data/")
+setwd("~/Dropbox/Projects/baby_growth/data/")
 ```
 ```{r, echo=FALSE}
 load('nwaz.Rda')
@@ -25,8 +25,8 @@ swaz <- by(nwaz, nwaz$id,tail,n=1)
 awaz <- do.call("rbind", as.list(swaz))
 nwaz <- subset(awaz, select=c(id, sex, BABY_WEIGHT, race.f, bmic5.f,
                             BMI_LMP_kgm2, mat_gest_wt_gain_category2,
-                            gest_weight_gain_kg, GestAge_TotalDays, smoker, maternal_smoking2, parity_3cat,
-                            mom_age_delv, race_final, education4, GEST_DIABETES, PREGNANCY_HYPERTENSION))
+                            gest_weight_gain_kg, GestAge_TotalDays, maternal_smoking2, parity_3cat,
+                            mom_age_delv, race_final, education_final, GEST_DIABETES, PREGNANCY_HYPERTENSION))
 nwaz <- na.omit(nwaz)
 
 summary(lm(BABY_WEIGHT~BMI_LMP_kgm2+race.f, data=nwaz))
