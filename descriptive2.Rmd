@@ -1,0 +1,89 @@
+---
+title: "Baby Growth Descriptive"
+author: "Victor Wang"
+date: "June 24, 2015"
+output: html_document
+---
+
+### CrossTab of Prepregancy BMI and Weight Gain Categories
+
+```{r, echo=FALSE}
+library(gmodels)
+library(ggplot2)
+setwd("~/Dropbox/Projects/baby_growth/data")
+load(file="nwaz.Rda")
+swaz <- by(nwaz, nwaz$id,tail,n=1)
+awaz <- do.call("rbind", as.list(swaz))
+nwaz <- subset(awaz, select=c(id, sex, BABY_WEIGHT, race.f, bmic5.f,
+                            BMI_LMP_kgm2, mat_gest_wt_gain_category2, mat_gest_wt_gain_c3.f, 
+                            gest_weight_gain_kg, GestAge_TotalDays, maternal_smoking2, parity_3cat,
+                            mom_age_delv, race_final, education_final, GEST_DIABETES, PREGNANCY_HYPERTENSION))
+nwaz <- na.omit(nwaz)
+
+# x_bmi_wg <- table(nwaz$bmic5.f, nwaz$mat_gest_wt_gain_c3.f)
+# prop.table(x_bmi_wg, 2)
+CrossTable(nwaz$bmic5.f, nwaz$mat_gest_wt_gain_c3.f, prop.t = FALSE, prop.chisq = FALSE)
+```
+
+### Prepregancy BMI by weight gain categories. 
+
+```{r, echo=FALSE, fig.show='hold'}
+# suppressMessages(print(qplot(BMI_LMP_kgm2, data=nwaz, geom="histogram", fill=mat_gest_wt_gain_c3.f)))
+# 
+# qplot(BMI_LMP_kgm2, ..density.., data=nwaz, geom="density", fill=mat_gest_wt_gain_c3.f, position='stack', main='Density')
+
+# qplot(BMI_LMP_kgm2, ..count.., data=nwaz, geom="density", fill=mat_gest_wt_gain_c3.f, position='stack', main='Count')
+# 
+# qplot(BMI_LMP_kgm2, ..count.., data=nwaz, geom="density", fill=mat_gest_wt_gain_c3.f, position='fill', main='Count')
+
+p <- ggplot(nwaz, aes(x=BMI_LMP_kgm2, group=mat_gest_wt_gain_c3.f, fill=mat_gest_wt_gain_c3.f)) +
+#   geom_density(fill=NA, color="black") +
+  geom_histogram() +
+  facet_grid(mat_gest_wt_gain_c3.f ~ .) +
+  theme(legend.position="none") +
+  ggtitle("Smoothed Line Graph for BMI")
+
+suppressMessages(print(p))
+
+qplot(mat_gest_wt_gain_c3.f, BMI_LMP_kgm2, data=nwaz, geom="violin", fill=mat_gest_wt_gain_c3.f)
+
+qplot(mat_gest_wt_gain_c3.f, BMI_LMP_kgm2, data=nwaz, geom="boxplot", fill=mat_gest_wt_gain_c3.f)
+
+# qplot(mat_gest_wt_gain_c3.f, BMI_LMP_kgm2, data=nwaz, color=bmic5.f)
+```
+
+### Weight gain by Prepregancy BMI categories. 
+
+```{r, echo=FALSE, fig.show='hold'}
+p <- ggplot(nwaz, aes(x=gest_weight_gain_kg, group=bmic5.f, fill=bmic5.f)) +
+  geom_histogram() +
+  facet_grid(bmic5.f ~ .) +
+  theme(legend.position="none") +
+  ggtitle("Smoothed Line Graph for weight gain")
+
+suppressMessages(print(p))
+
+qplot(bmic5.f, gest_weight_gain_kg, data=nwaz, geom="violin", fill=bmic5.f)
+
+qplot(bmic5.f, gest_weight_gain_kg, data=nwaz, geom="boxplot", fill=bmic5.f)
+```
+
+### Weight gain by weight gain categories. 
+
+```{r, echo=FALSE, fig.show='hold'}
+p <- ggplot(nwaz, aes(x=gest_weight_gain_kg, group=mat_gest_wt_gain_c3.f, fill=mat_gest_wt_gain_c3.f)) +
+  geom_histogram() +
+  facet_grid(mat_gest_wt_gain_c3.f ~ .) +
+  theme(legend.position="none") +
+  ggtitle("Smoothed Line Graph for weight gain")
+
+suppressMessages(print(p))
+
+qplot(mat_gest_wt_gain_c3.f, gest_weight_gain_kg, data=nwaz, geom="violin", fill=bmic5.f)
+
+qplot(mat_gest_wt_gain_c3.f, gest_weight_gain_kg, data=nwaz, geom="boxplot", fill=bmic5.f)
+
+qplot(bmic5.f, gest_weight_gain_kg, data=nwaz, geom="violin", fill=mat_gest_wt_gain_c3.f)
+
+qplot(bmic5.f, gest_weight_gain_kg, data=nwaz, geom="boxplot", fill=mat_gest_wt_gain_c3.f)
+```
