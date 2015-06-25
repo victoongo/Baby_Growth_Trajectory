@@ -5,7 +5,7 @@ date: "June 24, 2015"
 output: html_document
 ---
 
-### CrossTab of Prepregancy BMI and Weight Gain Categories
+### CrossTab of Prepregnancy BMI and Weight Gain Categories
 
 ```{r, echo=FALSE}
 library(gmodels)
@@ -25,7 +25,7 @@ nwaz <- na.omit(nwaz)
 CrossTable(nwaz$bmic5.f, nwaz$mat_gest_wt_gain_c3.f, prop.t = FALSE, prop.chisq = FALSE)
 ```
 
-### Prepregancy BMI by weight gain categories. 
+### Prepregnancy BMI by weight gain categories. 
 
 ```{r, echo=FALSE, fig.show='hold'}
 # suppressMessages(print(qplot(BMI_LMP_kgm2, data=nwaz, geom="histogram", fill=mat_gest_wt_gain_c3.f)))
@@ -52,7 +52,7 @@ qplot(mat_gest_wt_gain_c3.f, BMI_LMP_kgm2, data=nwaz, geom="boxplot", fill=mat_g
 # qplot(mat_gest_wt_gain_c3.f, BMI_LMP_kgm2, data=nwaz, color=bmic5.f)
 ```
 
-### Weight gain by Prepregancy BMI categories. 
+### Weight gain by Prepregnancy BMI categories. 
 
 ```{r, echo=FALSE, fig.show='hold'}
 p <- ggplot(nwaz, aes(x=gest_weight_gain_kg, group=bmic5.f, fill=bmic5.f)) +
@@ -86,4 +86,15 @@ qplot(mat_gest_wt_gain_c3.f, gest_weight_gain_kg, data=nwaz, geom="boxplot", fil
 qplot(bmic5.f, gest_weight_gain_kg, data=nwaz, geom="violin", fill=mat_gest_wt_gain_c3.f)
 
 qplot(bmic5.f, gest_weight_gain_kg, data=nwaz, geom="boxplot", fill=mat_gest_wt_gain_c3.f)
+```
+
+```{r, echo=FALSE, fig.show='hold'}
+p <- ggplot(nwaz, aes(x=BMI_LMP_kgm2, y=gest_weight_gain_kg, group=mat_gest_wt_gain_c3.f, fill=mat_gest_wt_gain_c3.f)) +
+  geom_point(aes(colour = mat_gest_wt_gain_c3.f)) +
+  # facet_grid(mat_gest_wt_gain_c3.f ~ .) +
+  theme(legend.position="none") +
+  ggtitle("Scatter plot for weight gain on BMI")
+
+suppressMessages(print(p))
+
 ```

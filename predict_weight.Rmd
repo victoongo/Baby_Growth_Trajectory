@@ -1,0 +1,132 @@
+---
+title: "Prediction of Baby Weight at Age 2"
+author: "Victor Wang"
+date: "June 25, 2015"
+output: html_document
+---
+
+```{r, echo=FALSE}
+library(gmodels)
+library(ggplot2)
+library(plyr)
+library(doBy)
+library(reshape2)
+library(xtable)
+setwd("~/Dropbox/Projects/baby_growth/data")
+load(file="nwaz.Rda")
+swaz <- by(nwaz, nwaz$id,tail,n=1)
+awaz <- do.call("rbind", as.list(swaz))
+nwaz <- subset(awaz, select=c(id, sex, BABY_WEIGHT, race.f, bmic5.f,
+                            BMI_LMP_kgm2, mat_gest_wt_gain_category2, mat_gest_wt_gain_c3.f, 
+                            gest_weight_gain_kg, GestAge_TotalDays, maternal_smoking2, parity_3cat,
+                            mom_age_delv, race_final, education_final, GEST_DIABETES, PREGNANCY_HYPERTENSION))
+nwaz <- na.omit(nwaz)
+
+bmi<-read.csv("ht_wt2.csv", as.is=TRUE)
+bmi$id <- bmi$mom_nestid * 100000 + bmi$nestid
+bmi <- bmi[, c('id', 'weight_kg_age2', 'age_months_weight_age2')]
+bmi <- unique(bmi)
+
+nwaz <- merge(nwaz, bmi, all.x = TRUE)
+nwaz <- na.omit(nwaz)
+```
+
+
+```{r, echo=FALSE, fig.show='hold', eval=TRUE}
+p <- ggplot(nwaz, aes(x=weight_kg_age2, group=mat_gest_wt_gain_c3.f, fill=mat_gest_wt_gain_c3.f)) +
+  geom_histogram() +
+  facet_grid(mat_gest_wt_gain_c3.f ~ .) +
+  theme(legend.position="none") +
+  ggtitle("Smoothed Line Graph for BMI")
+
+suppressMessages(print(p))
+
+qplot(mat_gest_wt_gain_c3.f, weight_kg_age2, data=nwaz, geom="violin", fill=mat_gest_wt_gain_c3.f)
+
+qplot(mat_gest_wt_gain_c3.f, weight_kg_age2, data=nwaz, geom="boxplot", fill=mat_gest_wt_gain_c3.f)
+
+qplot(bmic5.f, weight_kg_age2, data=nwaz, geom="violin", fill=bmic5.f)
+
+qplot(bmic5.f, weight_kg_age2, data=nwaz, geom="boxplot", fill=bmic5.f)
+
+# qplot(bmic5.f, weight_kg_age2, data=nwaz, geom="violin", fill=mat_gest_wt_gain_c3.f)
+# 
+# qplot(bmic5.f, weight_kg_age2, data=nwaz, geom="boxplot", fill=mat_gest_wt_gain_c3.f)
+
+# qplot(mat_gest_wt_gain_c3.f, BMI_LMP_kgm2, data=nwaz, color=bmic5.f)
+```
+
+```{r, echo=FALSE, fig.show='hold'}
+p <- ggplot(nwaz, aes(x=gest_weight_gain_kg, y=weight_kg_age2, group=mat_gest_wt_gain_c3.f, fill=mat_gest_wt_gain_c3.f)) +
+  geom_point(aes(colour = mat_gest_wt_gain_c3.f, size = BMI_LMP_kgm2), alpha = 0.3) +
+  # facet_grid(mat_gest_wt_gain_c3.f ~ .) +
+  theme(legend.position="none") +
+  ggtitle("Scatter plot for weight gain on BMI")
+
+suppressMessages(print(p))
+
+p <- ggplot(nwaz, aes(x=BMI_LMP_kgm2, y=weight_kg_age2, group=mat_gest_wt_gain_c3.f, fill=mat_gest_wt_gain_c3.f)) +
+  geom_point(aes(colour = mat_gest_wt_gain_c3.f, size = gest_weight_gain_kg), alpha = 0.3) +
+  # facet_grid(mat_gest_wt_gain_c3.f ~ .) +
+  theme(legend.position="none") +
+  ggtitle("Scatter plot for weight gain on BMI")
+
+suppressMessages(print(p))
+
+p <- ggplot(nwaz, aes(x=BMI_LMP_kgm2, y=gest_weight_gain_kg, group=mat_gest_wt_gain_c3.f, fill=mat_gest_wt_gain_c3.f)) +
+  geom_point(aes(colour = mat_gest_wt_gain_c3.f, size = weight_kg_age2), alpha = 0.3) +
+  # facet_grid(mat_gest_wt_gain_c3.f ~ .) +
+  theme(legend.position="none") +
+  ggtitle("Scatter plot for weight gain on BMI")
+
+suppressMessages(print(p))
+
+```
+
+```{r, echo=F, eval=FALSE}
+library(caret)
+set.seed(62433)
+
+rffit <- train(weight_kg_age2~., method='rf', data=nwaz)
+
+rfpred <- predict(rffit, nwaz)
+
+preddf<- data.frame(rfpred, weight_kg_age2=nwaz$weight_kg_age2)
+combfit <- train(weight_kg_age2~., method='rf', data=preddf)
+
+# confusionMatrix(testing$diagnosis, predict(rffit, testing))
+
+```
+
+```{r, eval=FALSE, echo=FALSE}
+ggplot(nwaz, aes(x = BMI_LMP_kgm2, y = gest_weight_gain_kg, fill = weight_kg_age2)) +
+     geom_tile(colour = "white") +
+     scale_fill_gradient(high="#FF0000" , low="#FFFFFF")+
+     ylab("") +
+     theme(panel.background = element_blank()) +
+     theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+```
+
+```{r, echo=FALSE}
+library(gplots)   # contains the heatmap.2 package
+library(car)    
+# States[1:3,] # look at the data
+rownames(nwaz) <- nwaz$id
+nwaz <- subset(nwaz, select=c(sex, BABY_WEIGHT, #race.f,  education_final, 
+                            BMI_LMP_kgm2, #mat_gest_wt_gain_category2, mat_gest_wt_gain_c3.f, 
+                            gest_weight_gain_kg, GestAge_TotalDays, maternal_smoking2, parity_3cat,
+                            mom_age_delv, GEST_DIABETES, PREGNANCY_HYPERTENSION))
+
+scaled <- scale(nwaz) # scale all but the first column to make information comparable
+heatmap.2(scaled, # specify the (scaled) data to be used in the heatmap
+            cexRow=0.5, cexCol=0.95, # decrease font size of row/column labels
+            scale="none", # we have already scaled the data
+            trace="none") # cleaner heatmap
+```
+
+```{r, echo=FALSE}
+library(d3heatmap)
+d3heatmap(nwaz, colors = scales::col_quantile("Blues", NULL, 5), scale = "col",
+    dendrogram = "row", k_row = 3)
+```
+
