@@ -16,7 +16,7 @@ css: style.css
 # library(doBy)
 # library(reshape2)
 # library(xtable)
-
+# 
 # setwd("~/Dropbox/Projects/baby_growth/data")
 # load('m11.Rda')
 # load('m12.Rda')
@@ -80,6 +80,8 @@ print(des.table, type='html')
 #### Table 2 Results of SITAR Models
 
 ```{r sitar, results='asis', echo=FALSE}
+options(warn=-1,show.error.messages=F)
+
 out.sitar <- function(tmp.mf) {
   tmp.mf.coef <- data.frame(summary(tmp.mf)$tTable)
   tmp.mf.coef$rn <- row.names(tmp.mf.coef)
@@ -168,6 +170,8 @@ plot(m13, opt='a', col=1+as.integer(id) %% 5, xlim=xaxsd(), ylim=c(2, 18), yfun=
 
 #### plot of growth vs velocity
 ```{r, echo=FALSE, include=FALSE}
+options(warn=-1,show.error.messages=F)
+
 # m23.coef
 m23.coef <- data.frame(summary(m23)$tTable)
 m23.coef.weight1 <- m23.coef[grep("mat_gest_wt_gain_c3.f1", rownames(m23.coef)), 1]
@@ -193,5 +197,3 @@ plot(m13, y2par=list(col='blue'), col='blue', yfun=exp, xlab="", ylab="Weight (k
      add=T, abc=c(a=m13.coef.bmi6[1],b=m13.coef.bmi6[2],c=m13.coef.bmi6[3]))
 legend("right",lty=1,col=c("black","blue"),legend=c("Normal BMI","BMI > 40"), cex=0.9, inset=0.05)
 ```
-
-### the list of 

@@ -5,13 +5,46 @@ date: "June 25, 2015"
 output: html_document
 ---
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, inculde=FALSE, eval=FALSE}
+library(sas7bdat)
+setwd('~/epi_data/NEST I/Chart Abstraction/')
+chart <- read.sas7bdat("nest_r01_baseline_medabs_22jan14.sas7bdat")
+
+setwd('~/epi_data/NEST I/Baseline Questionnaire/')
+blq <- read.sas7bdat("nest_i_blq_05apr15.sas7bdat")
+
+setwd("~/Dropbox/Projects/baby_growth/data")
+save(chart, file="chart.Rda")
+save(blq, file="blq.Rda")
+```
+
+```{r, echo=FALSE, include=FALSE}
 library(gmodels)
 library(ggplot2)
 library(plyr)
+library(dplyr)
 library(doBy)
 library(reshape2)
 library(xtable)
+library(sas7bdat)
+
+setwd('~/epi_data/NEST I/Vitals/')
+wt2i <- read.sas7bdat('nest_r01_ht_wt_age2_05may15.sas7bdat')
+wt2i$id <- wt2i$mom_nestid * 100000 + wt2i$nestid
+wt2i <- filter(wt2i, BIVWT_age2 == 0)
+wt2i <- select(wt2i, id, weight_kg_age2, age_months_weight_age2)
+
+setwd('~/epi_data/NEST II/Vitals/')
+wt2ii <- read.sas7bdat('nest_r21_ht_wt_age2_05may15.sas7bdat')
+wt2ii$id <- wt2ii$mom_nestid * 100000 + wt2ii$nestid
+wt2ii <- filter(wt2ii, BIVWT_age2 == 0)
+wt2ii <- select(wt2ii, id, weight_kg_age2, age_months_weight_age2)
+
+wt2 <- rbind(wt2i, wt2ii)
+
+# load(file="chart.Rda")
+# load(file="blq.Rda")
+
 setwd("~/Dropbox/Projects/baby_growth/data")
 load(file="nwaz.Rda")
 swaz <- by(nwaz, nwaz$id,tail,n=1)
@@ -22,12 +55,7 @@ nwaz <- subset(awaz, select=c(id, sex, BABY_WEIGHT, race.f, bmic5.f,
                             mom_age_delv, race_final, education_final, GEST_DIABETES, PREGNANCY_HYPERTENSION))
 nwaz <- na.omit(nwaz)
 
-bmi<-read.csv("ht_wt2.csv", as.is=TRUE)
-bmi$id <- bmi$mom_nestid * 100000 + bmi$nestid
-bmi <- bmi[, c('id', 'weight_kg_age2', 'age_months_weight_age2')]
-bmi <- unique(bmi)
-
-nwaz <- merge(nwaz, bmi, all.x = TRUE)
+nwaz <- merge(nwaz, wt2, all.x = TRUE)
 nwaz <- na.omit(nwaz)
 ```
 
@@ -83,6 +111,32 @@ suppressMessages(print(p))
 
 ```
 
+### all NEST
+
+```{r, echo=FALSE}
+options(warn=-1,show.error.messages=F)
+
+bmi <- read.csv("~/Dropbox/Projects/baby_growth/data/ht_wt2.csv", as.is=TRUE)
+bmi <- unique(bmi)
+bmi <- filter(bmi, gest_weight_gain_kg > -30)
+
+p <- ggplot(bmi, aes(x=BMI_LMP_kgm2, y=gest_weight_gain_kg, group=as.factor(mat_gest_wt_gain_category2), fill=as.factor(mat_gest_wt_gain_category2))) +
+  geom_point(aes(colour = as.factor(mat_gest_wt_gain_category2)), alpha = 0.5) +
+  # facet_grid(mat_gest_wt_gain_c3.f ~ .) +
+  theme(legend.position="none") +
+  ggtitle("Scatter plot for weight gain on BMI for all NEST")
+
+suppressMessages(print(p))
+
+p <- ggplot(bmi, aes(x=scale(BMI_LMP_kgm2), y=scale(gest_weight_gain_kg), group=as.factor(mat_gest_wt_gain_category2), fill=as.factor(mat_gest_wt_gain_category2))) +
+  geom_point(aes(colour = as.factor(mat_gest_wt_gain_category2)), alpha = 0.5) +
+  # facet_grid(mat_gest_wt_gain_c3.f ~ .) +
+  theme(legend.position="none") +
+  ggtitle("Scatter plot for weight gain on BMI for all NEST")
+
+suppressMessages(print(p))
+```
+
 ```{r, echo=F, eval=FALSE}
 library(caret)
 set.seed(62433)
@@ -107,7 +161,9 @@ ggplot(nwaz, aes(x = BMI_LMP_kgm2, y = gest_weight_gain_kg, fill = weight_kg_age
      theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 ```
 
-```{r, echo=FALSE}
+
+
+```{r, echo=FALSE, eval=TRUE, include=F}
 library(gplots)   # contains the heatmap.2 package
 library(car)    
 # States[1:3,] # look at the data
@@ -118,6 +174,9 @@ nwaz <- subset(nwaz, select=c(sex, BABY_WEIGHT, #race.f,  education_final,
                             mom_age_delv, GEST_DIABETES, PREGNANCY_HYPERTENSION))
 
 scaled <- scale(nwaz) # scale all but the first column to make information comparable
+```
+
+```{r, echo=FALSE, eval=FALSE}
 heatmap.2(scaled, # specify the (scaled) data to be used in the heatmap
             cexRow=0.5, cexCol=0.95, # decrease font size of row/column labels
             scale="none", # we have already scaled the data
@@ -126,7 +185,7 @@ heatmap.2(scaled, # specify the (scaled) data to be used in the heatmap
 
 ```{r, echo=FALSE}
 library(d3heatmap)
-d3heatmap(nwaz, colors = scales::col_quantile("Blues", NULL, 5), scale = "col",
-    dendrogram = "row", k_row = 3)
+d3heatmap(scaled, colors = scales::col_quantile("Blues", NULL, 5), scale = "col",
+    dendrogram = "both", k_row = 3, k_col = 3)
 ```
 
